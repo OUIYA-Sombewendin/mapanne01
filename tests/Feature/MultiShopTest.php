@@ -82,6 +82,9 @@ class MultiShopTest extends TestCase
 
         // Le caissier ne voit que les ventes de cette boutique.
         $this->post('/deconnexion');
+        // Tant que l'email n'est pas confirmé, la boutique reste fermée à l'employé.
+        $this->actingAs($cashier->fresh())->get('/pro')->assertRedirect('/email/verifier');
+        $cashier->markEmailAsVerified();
         $this->actingAs($cashier->fresh())->get('/pro')->assertOk()->assertSee($shop->business_name);
         $this->get('/pro/gestion/factures/nouvelle')->assertOk();
         $this->get('/pro/gestion/stock')->assertForbidden();
@@ -111,7 +114,10 @@ class MultiShopTest extends TestCase
         $this->post('/deconnexion');
 
         $this->post('/connexion', ['login' => 'issa@exemple.bf', 'password' => 'provisoire-123'])->assertRedirect('/pro');
-        $this->get('/pro/fiche')->assertOk();
+        $this->get('/pro/fiche')->assertRedirect('/email/verifier');
+        $issa = User::where('email', 'issa@exemple.bf')->first();
+        $issa->markEmailAsVerified();
+        $this->actingAs($issa->fresh())->get('/pro/fiche')->assertOk();
         $this->get('/pro/equipe')->assertForbidden();
         $this->get('/pro/boutiques')->assertOk()->assertSee('Gérant');
     }

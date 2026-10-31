@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password as PasswordRule;
@@ -54,6 +55,11 @@ class PasswordController extends Controller
             function ($user, string $password) {
                 $user->forceFill(['password' => $password, 'remember_token' => Str::random(60)])->save();
                 $user->tokens()->delete(); // déconnecte les applications mobiles
+                DB::table('sessions')->where('user_id', $user->id)->delete();
+                // Le lien reçu par email prouve que l'adresse appartient bien à la personne.
+                if (! $user->hasVerifiedEmail()) {
+                    $user->markEmailAsVerified();
+                }
                 event(new PasswordReset($user));
             }
         );

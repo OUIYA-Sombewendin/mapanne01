@@ -26,10 +26,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'plan' => EnsurePlanFeature::class,
             'unlocked' => EnsureUnlocked::class,
             'shop' => \App\Http\Middleware\EnsureShopAccess::class,
+            'admin.idle' => \App\Http\Middleware\AdminIdleTimeout::class,
             'not-impersonating' => \App\Http\Middleware\EnsureNotImpersonating::class,
         ]);
         // Côté API, la suspension révoque les jetons (voir Admin\UserController).
-        $middleware->web(append: [EnsureAccountIsActive::class, MaintenanceMode::class]);
+        $middleware->web(append: [EnsureAccountIsActive::class, MaintenanceMode::class, \App\Http\Middleware\SecurityHeaders::class]);
         $middleware->api(append: [MaintenanceMode::class]);
         $middleware->redirectGuestsTo(fn () => route('login'));
         $middleware->redirectUsersTo(fn ($request) => $request->user()->homeRoute());

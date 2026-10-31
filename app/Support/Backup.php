@@ -69,7 +69,17 @@ class Backup
                 'created_at' => now()->toIso8601String(),
                 'database' => self::db('database'),
                 'files' => $files,
+                'encrypted' => self::password() !== null,
             ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+            // Chiffrement AES-256 de chaque fichier si un mot de passe est défini (Réglages › Sauvegardes).
+            if ($password = self::password()) {
+                $zip->setPassword($password);
+                for ($i = 0; $i < $zip->numFiles; $i++) {
+                    if ($zip->getNameIndex($i) !== 'manifest.json') {
+                        $zip->setEncryptionIndex($i, ZipArchive::EM_AES_256);
+                    }
+                }
+            }
             $zip->close();
         } finally {
             @unlink($dump);
@@ -96,7 +106,12 @@ class Backup
             if ($zip->open($path) !== true || $zip->locateName('database.dump') === false) {
                 throw new RuntimeException('Archive invalide : database.dump introuvable.');
             }
-            $zip->extractTo($tmp);
+            if ($password = self::password()) {
+                $zip->setPassword($password);
+            }
+            if (! $zip->extractTo($tmp)) {
+                throw new RuntimeException('Impossible d\'ouvrir l\'archive : mot de passe de chiffrement incorrect ou manquant.');
+            }
             $zip->close();
 
             self::run('pg_restore', ['--clean', '--if-exists', '--no-owner', '--single-transaction', '--dbname='.self::db('database'), $tmp.'/database.dump']);
@@ -112,6 +127,14 @@ class Backup
         cache()->flush();
 
         return $safety;
+    }
+
+    /** Mot de passe de chiffrement (Réglages › Sauvegardes), ou null si non défini. */
+    public static function password(): ?string
+    {
+        $password = (string) setting('backup_password');
+
+        return $password !== '' && defined('ZipArchive::EM_AES_256') ? $password : null;
     }
 
     /** Supprime les plus anciennes au-delà du nombre à conserver (les sauvegardes de sécurité comptent). */

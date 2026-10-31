@@ -50,7 +50,8 @@ return [
     |
     */
 
-    'expiration' => null,
+    // Durée de vie des jetons de l'application mobile (minutes) : 60 jours par défaut.
+    'expiration' => (int) env('SANCTUM_EXPIRATION_MINUTES', 60 * 24 * 60) ?: null,
 
     /*
     |--------------------------------------------------------------------------

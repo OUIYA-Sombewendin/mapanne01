@@ -23,6 +23,7 @@ class BackupController extends Controller
         return view('admin.backups', [
             'backups' => $backups->values()->all(),
             'tool' => Backup::binary('pg_dump'),
+            'encrypted' => Backup::password() !== null,
         ]);
     }
 
@@ -40,8 +41,10 @@ class BackupController extends Controller
         return back()->with('success', "Sauvegarde {$name} créée.");
     }
 
-    public function download(string $file): BinaryFileResponse
+    /** Une archive contient toute la base : téléchargement et suppression réservés au super-admin. */
+    public function download(Request $request, string $file): BinaryFileResponse
     {
+        abort_unless($request->user()->isSuperAdmin(), 403, 'Seul un super-administrateur peut télécharger une sauvegarde.');
         $path = rescue(fn () => Backup::path($file), null, false);
         abort_unless($path && is_file($path), 404);
         ActivityLog::record('backup.downloaded', null, ['fichier' => $file]);
@@ -49,8 +52,9 @@ class BackupController extends Controller
         return response()->download($path);
     }
 
-    public function destroy(string $file): RedirectResponse
+    public function destroy(Request $request, string $file): RedirectResponse
     {
+        abort_unless($request->user()->isSuperAdmin(), 403, 'Seul un super-administrateur peut supprimer une sauvegarde.');
         $path = rescue(fn () => Backup::path($file), null, false);
         abort_unless($path && is_file($path), 404);
         Storage::disk('local')->delete(Backup::DIR.'/'.$file);

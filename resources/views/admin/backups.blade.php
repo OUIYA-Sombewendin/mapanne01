@@ -13,6 +13,13 @@
         </div>
     </div>
 
+    @unless ($encrypted)
+        <div class="mb-5 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            ⚠️ Les sauvegardes ne sont pas chiffrées : elles contiennent toute la base (comptes, téléphones, factures).
+            Définissez un mot de passe de chiffrement dans <a href="{{ route('admin.settings.index', 'backups') }}" class="font-semibold underline">Réglages › Sauvegardes</a>.
+        </div>
+    @endunless
+
     <div class="mb-5 grid gap-3 md:grid-cols-3">
         <div class="card p-4"><p class="text-xs text-ink-500">Sauvegarde automatique</p><p class="font-bold">{{ feature('backup_auto_enabled') ? 'Chaque nuit à 2 h' : 'Désactivée' }}</p></div>
         <div class="card p-4"><p class="text-xs text-ink-500">Conservées</p><p class="font-bold">{{ count($backups) }} / {{ (int) setting('backup_keep') }} max.</p></div>

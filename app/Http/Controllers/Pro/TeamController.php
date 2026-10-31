@@ -8,8 +8,10 @@ use App\Models\ActivityLog;
 use App\Models\Provider;
 use App\Models\User;
 use App\Rules\BurkinaPhone;
+use App\Support\Notifier;
 use App\Support\Phone;
 use App\Support\ShopTeam;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -98,7 +100,9 @@ class TeamController extends Controller
                 $message .= ' L\'email n\'a pas pu partir : donnez-lui un mot de passe provisoire.';
             }
         } elseif (! $existing) {
-            $message .= ' Communiquez-lui son mot de passe provisoire.';
+            // Mot de passe provisoire : l'employé doit tout de même confirmer son adresse.
+            Notifier::send($member, new VerifyEmail);
+            $message .= ' Communiquez-lui son mot de passe provisoire ; il devra confirmer son email à la première connexion.';
         }
 
         return back()->with('success', $message);

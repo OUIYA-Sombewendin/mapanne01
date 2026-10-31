@@ -11,6 +11,7 @@ use App\Support\Phone;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -74,8 +75,12 @@ class AccountController extends Controller
             'password' => ['required', 'confirmed', Password::min(8)],
         ]);
 
-        $request->user()->update(['password' => $request->input('password')]);
+        $user = $request->user();
+        $user->update(['password' => $request->input('password')]);
+        // Les autres appareils (navigateurs, application mobile) sont déconnectés.
+        $user->tokens()->delete();
+        DB::table('sessions')->where('user_id', $user->id)->where('id', '!=', $request->session()->getId())->delete();
 
-        return back()->with('success', 'Mot de passe modifié.');
+        return back()->with('success', 'Mot de passe modifié. Vos autres appareils ont été déconnectés.');
     }
 }

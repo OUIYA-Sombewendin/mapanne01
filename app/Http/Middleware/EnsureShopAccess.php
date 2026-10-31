@@ -21,6 +21,11 @@ class EnsureShopAccess
             return redirect()->route('account.show')->with('error', 'Vous n\'êtes rattaché à aucune boutique pour le moment.');
         }
 
+        // Un employé doit avoir confirmé son email (réglable dans Réglages › Sécurité).
+        if (feature('employee_email_verification') && $user->shopRole($user->provider) !== 'owner' && ! $user->hasVerifiedEmail()) {
+            return redirect()->route('verification.notice')->with('error', 'Confirmez votre adresse email pour accéder à la boutique.');
+        }
+
         if (! $user->canShop($area)) {
             abort(403, '« '.(ShopTeam::AREAS[$area] ?? $area).' » n\'est pas accessible avec votre rôle ('.ShopTeam::label($user->shopRole($user->provider)).').');
         }

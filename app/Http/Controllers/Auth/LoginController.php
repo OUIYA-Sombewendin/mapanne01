@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\User;
 use App\Support\Phone;
+use App\Support\TwoFactor;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -48,13 +49,27 @@ class LoginController extends Controller
         }
 
         RateLimiter::clear($key);
-        Auth::login($user, $request->boolean('remember'));
+
+        // Administrateurs : deuxième étape avec un code envoyé par email (si activé).
+        if (TwoFactor::required($user)) {
+            TwoFactor::challenge($request, $user, $request->boolean('remember'));
+
+            return redirect()->route('login.two-factor');
+        }
+
+        return self::completeLogin($request, $user, $request->boolean('remember'));
+    }
+
+    /** Ouvre la session (après le mot de passe, ou après le code pour un admin). */
+    public static function completeLogin(Request $request, User $user, bool $remember): RedirectResponse
+    {
+        Auth::login($user, $remember);
         $request->session()->regenerate();
-        // Dernière connexion précédente, affichée sur le tableau de bord admin.
+        // Dernière connexion précédente, affichée sur les tableaux de bord.
         $request->session()->put('previous_login_at', $user->last_login_at?->toIso8601String());
         $user->forceFill(['last_login_at' => now()])->saveQuietly();
         if ($user->isAdmin()) {
-            ActivityLog::record('auth.admin_login', $user, ['ip' => $request->ip()]);
+            ActivityLog::record('auth.admin_login', $user, ['ip' => $request->ip(), 'double_vérification' => TwoFactor::required($user)]);
         }
 
         return redirect()->intended($user->homeRoute());

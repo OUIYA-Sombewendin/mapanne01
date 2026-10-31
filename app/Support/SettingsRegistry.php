@@ -191,7 +191,17 @@ class SettingsRegistry
                     'backup_auto_enabled' => ['type' => 'bool', 'label' => 'Sauvegarde automatique chaque nuit (2 h)', 'default' => false, 'help' => 'Nécessite la tâche planifiée Laravel sur le serveur (voir README).'],
                     'backup_include_files' => ['type' => 'bool', 'label' => 'Inclure les photos et fichiers envoyés', 'default' => true],
                     'backup_keep' => ['type' => 'int', 'label' => 'Nombre de sauvegardes conservées', 'default' => 10],
+                    'backup_password' => ['type' => 'secret', 'label' => 'Mot de passe de chiffrement des sauvegardes (AES-256)', 'default' => '', 'help' => 'Conservez-le hors du serveur : sans lui, une sauvegarde chiffrée ne peut pas être restaurée.'],
                     'backup_pg_dump_path' => ['type' => 'string', 'label' => 'Dossier des outils PostgreSQL (pg_dump), vide = automatique', 'default' => ''],
+                ],
+            ],
+            'security' => [
+                'label' => 'Sécurité',
+                'icon' => '🔐',
+                'settings' => [
+                    'admin_two_factor_enabled' => ['type' => 'bool', 'label' => 'Double vérification des administrateurs (code par email à chaque connexion)', 'default' => false, 'help' => 'Activez-la dès que l\'envoi d\'emails fonctionne (testez avec « email de test »).'],
+                    'admin_idle_minutes' => ['type' => 'int', 'label' => 'Déconnexion automatique d\'un admin inactif (minutes, 0 = jamais)', 'default' => 30],
+                    'employee_email_verification' => ['type' => 'bool', 'label' => 'Les employés de boutique doivent confirmer leur email avant d\'accéder à la boutique', 'default' => true],
                 ],
             ],
             'emergency' => [

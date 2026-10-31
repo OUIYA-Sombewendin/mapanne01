@@ -30,6 +30,7 @@ class ActivityLog extends Model
 
     /** Libellés lisibles de l'historique (les actions inconnues s'affichent telles quelles). */
     public const LABELS = [
+        'auth.two_factor_failed' => 'Code de connexion admin refusé',
         'auth.admin_login' => 'Connexion à l\'administration',
         'backup.created' => 'Sauvegarde créée', 'backup.deleted' => 'Sauvegarde supprimée',
         'backup.downloaded' => 'Sauvegarde téléchargée', 'backup.restored' => 'Sauvegarde restaurée',

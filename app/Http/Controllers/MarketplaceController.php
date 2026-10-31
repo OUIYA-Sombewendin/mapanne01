@@ -10,6 +10,7 @@ use App\Models\Report;
 use App\Services\ProductSearch;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\View\View;
 
 class MarketplaceController extends Controller
@@ -43,7 +44,9 @@ class MarketplaceController extends Controller
         abort_unless($product->isVisible() || $isOwner || $user?->isAdmin(), 404);
 
         // Une vue comptée par visiteur et par produit (statistique pour le vendeur).
-        if ($product->isVisible() && ! $isOwner && ! $request->session()->has('viewed:'.$product->id)) {
+        // Une vue par visiteur (session) et par adresse IP sur 24 h : un robot ne peut pas gonfler le compteur.
+        if ($product->isVisible() && ! $isOwner && ! $request->session()->has('viewed:'.$product->id)
+            && RateLimiter::attempt('view:'.$product->id.':'.$request->ip(), 1, fn () => true, 86400)) {
             $product->increment('views_count');
             $request->session()->put('viewed:'.$product->id, true);
         }
@@ -81,7 +84,7 @@ class MarketplaceController extends Controller
 
         // Un seul comptage par visiteur et par produit (session).
         $key = 'contacted:'.$product->id;
-        if (! $request->session()->has($key)) {
+        if (! $request->session()->has($key) && RateLimiter::attempt('contact:'.$product->id.':'.$request->ip(), 1, fn () => true, 86400)) {
             $product->increment('contacts_count');
             $request->session()->put($key, true);
         }

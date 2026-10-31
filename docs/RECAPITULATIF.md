@@ -246,9 +246,53 @@ Dans le menu admin, la section **Prestataires** liste chaque type séparément.
 
 ---
 
-## 6. Analyse de la logique
+## 6. Sécurité
 
-### Règles garanties par les tests (100 tests)
+### Protections en place
+- **Connexion**
+  - Mots de passe chiffrés.
+  - 5 essais par minute au maximum.
+  - **Double vérification des admins** : code à 6 chiffres envoyé par email, valable 10 minutes, 5 essais au maximum. À activer dans **Réglages › Sécurité** dès que l'envoi d'emails fonctionne.
+  - **Déconnexion automatique d'un admin** après 30 minutes d'inactivité (réglable).
+- **Comptes**
+  - Changer son mot de passe déconnecte les autres appareils et l'application mobile.
+  - Les jetons de l'application mobile **expirent après 60 jours** (`SANCTUM_EXPIRATION_MINUTES`).
+  - Pendant l'**accès d'un admin au compte** d'un utilisateur, l'email et le mot de passe ne peuvent pas être changés.
+  - Les **employés de boutique** doivent confirmer leur email avant d'accéder à la boutique (réglable). Le lien de réinitialisation du mot de passe vaut confirmation.
+- **Droits** : permission vérifiée côté serveur sur chaque page admin, et cloisonnement complet entre boutiques (factures, stock, équipe).
+- **En-têtes de sécurité**
+  - Le site ne peut pas être affiché dans un autre site.
+  - Politique de contenu : scripts, styles et images seulement depuis le site et les tuiles de carte.
+  - Le navigateur ne devine pas le type des fichiers ; HTTPS imposé en production.
+- **Sauvegardes** : chiffrées en AES-256 si un mot de passe est défini dans **Réglages › Sauvegardes**. Le téléchargement, la suppression et la restauration sont réservés au super-admin.
+- **Données**
+  - Exports sans mot de passe ni secret, cellules CSV protégées contre les formules Excel.
+  - Photos réencodées, sans position GPS.
+  - Requêtes SQL paramétrées, tri limité à une liste de colonnes autorisées.
+- **Statistiques des vendeurs** : vues et contacts comptés une fois par visiteur et par adresse IP sur 24 h.
+- **Dépendances** : `composer audit` et `npm audit` ne signalent aucune vulnérabilité connue (vérification du 31/10/2026).
+
+### À faire à la mise en ligne
+- `APP_ENV=production` et **`APP_DEBUG=false`** (sinon une erreur affiche le code du serveur).
+- HTTPS obligatoire et `SESSION_SECURE_COOKIE=true`.
+- Un **utilisateur PostgreSQL dédié**, sans droits d'administration.
+- `ADMIN_PASSWORD` fort, et aucune donnée de démonstration.
+- `.env` non lisible publiquement ; `APP_KEY` sauvegardée à part (elle déchiffre le mot de passe SMTP et le mot de passe des sauvegardes).
+- Envoi d'emails réel (SMTP), puis **activer la double vérification des admins**.
+- Mot de passe de chiffrement des sauvegardes défini et conservé hors du serveur ; copie régulière des sauvegardes ailleurs.
+- Mises à jour régulières (`composer update`, `npm update`).
+- Déclaration à la CIL.
+
+### Limites connues
+- Le téléphone n'est pas vérifié par SMS.
+- Un avis n'est pas lié à une intervention réelle.
+- La politique de contenu autorise encore les scripts en ligne : Alpine.js en a besoin.
+
+---
+
+## 7. Analyse de la logique
+
+### Règles garanties par les tests (112 tests)
 - **Visibilité** : un prestataire non validé est invisible partout. Un produit n'est public que si la boutique est visible et que son type peut vendre.
 - **Permissions** :
   - chaque section admin vérifie la permission côté serveur ;
@@ -281,7 +325,7 @@ Dans le menu admin, la section **Prestataires** liste chaque type séparément.
 
 ---
 
-## 7. Marketplace et gestion : face à la concurrence
+## 8. Marketplace et gestion : face à la concurrence
 
 | Attente | Ce que fait MaPanne |
 |---|---|

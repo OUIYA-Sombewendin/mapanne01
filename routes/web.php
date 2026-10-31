@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\TwoFactorController;
 use App\Http\Controllers\Auth\VerificationController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MarketplaceController;
@@ -35,6 +36,10 @@ Route::middleware('feature:marketplace_enabled')->group(function () {
 Route::middleware('guest')->group(function () {
     Route::get('/connexion', [LoginController::class, 'create'])->name('login');
     Route::post('/connexion', [LoginController::class, 'store'])->middleware('throttle:20,1');
+    // Double vérification des administrateurs (code reçu par email)
+    Route::get('/connexion/verification', [TwoFactorController::class, 'show'])->name('login.two-factor');
+    Route::post('/connexion/verification', [TwoFactorController::class, 'verify'])->middleware('throttle:10,1');
+    Route::post('/connexion/verification/renvoyer', [TwoFactorController::class, 'resend'])->middleware('throttle:3,1')->name('login.two-factor.resend');
     Route::get('/inscription', [RegisterController::class, 'create'])->name('register');
     Route::post('/inscription', [RegisterController::class, 'store'])->middleware('throttle:10,1');
 
@@ -55,7 +60,8 @@ Route::middleware('auth')->group(function () {
 
     // Profil et mot de passe : tous les rôles (véhicules, favoris et avis réservés aux clients)
     Route::get('/mon-compte', [Account\AccountController::class, 'show'])->name('account.show');
-    Route::put('/mon-compte', [Account\AccountController::class, 'update'])->name('account.update');
+    // Pendant l'accès d'un admin au compte (assistance), l'email et le mot de passe ne peuvent pas être changés.
+    Route::put('/mon-compte', [Account\AccountController::class, 'update'])->middleware('not-impersonating')->name('account.update');
     Route::put('/mon-compte/mot-de-passe', [Account\AccountController::class, 'updatePassword'])->middleware('not-impersonating')->name('account.password');
 
     // Fin de l'accès d'un admin au compte d'un utilisateur (bandeau « Revenir à mon compte »).
@@ -181,7 +187,7 @@ Route::middleware('auth')->group(function () {
 
     // Espace administrateur ---------------------------------------------------
     // Chaque section exige une permission (App\Support\Permissions), accordée par le rôle de l'admin.
-    Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
+    Route::middleware(['role:admin', 'admin.idle'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/', Admin\DashboardController::class)->name('dashboard');
         Route::get('/recherche', Admin\SearchController::class)->name('search');
 
