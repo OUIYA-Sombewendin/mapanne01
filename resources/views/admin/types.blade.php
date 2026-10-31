@@ -5,7 +5,14 @@
     <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div class="space-y-3">
             @foreach ($types as $type)
-                <form method="POST" action="{{ route('admin.types.update', $type) }}" class="card grid gap-3 p-4 sm:grid-cols-[4rem_minmax(0,1fr)_minmax(0,1fr)_5rem] sm:items-end">
+                <form method="POST" action="{{ route('admin.types.update', $type) }}" class="card grid gap-3 p-5 sm:grid-cols-[4rem_minmax(0,1fr)_minmax(0,1fr)_5rem] sm:items-end">
+                    <h2 class="flex flex-wrap items-center gap-2 sm:col-span-4">
+                        <span class="text-xl">{{ $type->icon() }}</span> {{ $type->name }}
+                        <span @class(['chip', 'bg-emerald-100 text-emerald-800' => $type->is_active, 'bg-ink-100 text-ink-500' => ! $type->is_active])>{{ $type->is_active ? 'Actif' : 'Inactif' }}</span>
+                        @if ($type->can_sell_parts) <span class="chip bg-brand-100 text-brand-800">Vend des pièces</span> @endif
+                        <span class="chip bg-white text-accent-700 ring-1 ring-accent-100">{{ \App\Support\ProviderProfiles::options()[$type->profile_kind] ?? 'Formulaire général' }}</span>
+                        <span class="ml-auto text-xs font-normal text-ink-500">{{ $type->providers_count }} fiche(s)</span>
+                    </h2>
                     @csrf @method('PUT')
                     <div><label class="field-label">Icône</label><input name="icon" value="{{ $type->icon }}" class="input text-center text-xl" maxlength="8" required></div>
                     <div><label class="field-label">Nom</label><input name="name" value="{{ $type->name }}" class="input" required></div>

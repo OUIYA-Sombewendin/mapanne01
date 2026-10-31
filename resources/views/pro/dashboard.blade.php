@@ -89,9 +89,9 @@
     {{-- Indicateurs secondaires --}}
     @php
         $tiles = array_values(array_filter([
-            $kpis['salesToday'] !== null ? ['card', $money($kpis['salesToday']), 'Ventes du jour', 'border-ink-800', 'bg-ink-100 text-ink-700'] : null,
+            $kpis['salesToday'] !== null ? ['card', $money($kpis['salesToday']), 'Ventes du jour', 'border-accent-600', 'bg-accent-50 text-accent-700'] : null,
             $kpis['unpaid'] !== null ? ['clock', $money($kpis['unpaid']), 'Reste à encaisser', 'border-brand-500', 'bg-brand-50 text-brand-600'] : null,
-            $kpis['views'] !== null ? ['search', number_format($kpis['views'], 0, ',', ' '), 'Vues des pièces', 'border-ink-800', 'bg-ink-100 text-ink-700'] : null,
+            $kpis['views'] !== null ? ['search', number_format($kpis['views'], 0, ',', ' '), 'Vues des pièces', 'border-accent-600', 'bg-accent-50 text-accent-700'] : null,
             $kpis['contacts'] !== null ? ['phone', number_format($kpis['contacts'], 0, ',', ' '), 'Contacts reçus', 'border-brand-500', 'bg-brand-50 text-brand-600'] : null,
         ]));
     @endphp

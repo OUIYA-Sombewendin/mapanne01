@@ -32,9 +32,10 @@
     </section>
 
     {{-- Prestataires par type --}}
-    <div class="mt-8 mb-5 flex flex-wrap items-center gap-3 border-b border-ink-100 pb-4">
-        <span class="flex size-12 items-center justify-center rounded-xl bg-brand-50 text-brand-600"><x-icon name="providers" class="size-6" /></span>
-        <h2 class="text-xl font-bold">Prestataires par type</h2>
+    <div class="relative mt-8 mb-5 flex flex-wrap items-center gap-3 overflow-hidden rounded-2xl px-5 py-3 ring-1" style="background: var(--section-bg); --tw-ring-color: var(--tint)">
+        <span class="absolute top-2.5 bottom-2.5 left-0 w-1 rounded-r bg-brand-500"></span>
+        <span class="flex size-11 items-center justify-center rounded-xl bg-white text-accent-600 shadow-sm"><x-icon name="providers" class="size-6" /></span>
+        <h2 class="text-xl font-extrabold" style="color: var(--heading)">Prestataires par type</h2>
         <span class="text-ink-500">Fiches validées et visibles du public</span>
     </div>
     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
@@ -59,11 +60,11 @@
     {{-- Indicateurs --}}
     <div class="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
         @foreach ([
-            ['users', $stats['clients'], 'Clients', '+'.$stats['new_users_7d'].' en 7 jours', 'border-ink-800', 'bg-ink-100 text-ink-700'],
+            ['users', $stats['clients'], 'Clients', '+'.$stats['new_users_7d'].' en 7 jours', 'border-accent-600', 'bg-accent-50 text-accent-700'],
             ['cube', $stats['products'], 'Pièces en vente', $stats['open_requests'].' demande(s) ouvertes', 'border-brand-500', 'bg-brand-50 text-brand-600'],
-            ['phone', $stats['contacts'], 'Contacts générés', 'appels et WhatsApp', 'border-ink-800', 'bg-ink-100 text-ink-700'],
+            ['phone', $stats['contacts'], 'Contacts générés', 'appels et WhatsApp', 'border-accent-600', 'bg-accent-50 text-accent-700'],
             ['star', $stats['reviews'], 'Avis publiés', 'tous prestataires', 'border-brand-500', 'bg-brand-50 text-brand-600'],
-            ['card', $stats['subscriptions'], 'Abonnements actifs', number_format($stats['subscriptions_revenue'], 0, ',', ' ').' F ce mois', 'border-ink-800', 'bg-ink-100 text-ink-700'],
+            ['card', $stats['subscriptions'], 'Abonnements actifs', number_format($stats['subscriptions_revenue'], 0, ',', ' ').' F ce mois', 'border-accent-600', 'bg-accent-50 text-accent-700'],
             ['clock', $stats['avg_validation_hours'] !== null ? $stats['avg_validation_hours'].' h' : '—', 'Délai de validation', 'moyenne sur 30 jours', 'border-brand-500', 'bg-brand-50 text-brand-600'],
         ] as [$icon, $value, $label, $hint, $border, $tile])
             <div class="card border-t-4 {{ $border }} p-5 text-center">

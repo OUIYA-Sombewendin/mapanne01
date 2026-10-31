@@ -133,6 +133,7 @@ class SettingsRegistry
                 'settings' => [
                     'theme_brand_color' => ['type' => 'color', 'label' => 'Couleur principale (boutons, liens, accents)', 'default' => '#f45d0b', 'presets' => ['#f45d0b', '#e11d48', '#16a34a', '#0284c7', '#7c3aed', '#ca8a04']],
                     'theme_ink_color' => ['type' => 'color', 'label' => 'Couleur sombre (textes, menus, fonds sombres)', 'default' => '#18223d', 'presets' => ['#18223d', '#1f2937', '#0f3d3e', '#3b1d4a', '#1e293b']],
+                    'theme_accent_color' => ['type' => 'color', 'label' => 'Couleur d\'accent (titres, en-têtes, menu actif de l\'admin et de l\'espace pro)', 'default' => '#1d4f91', 'presets' => ['#1d4f91', '#0e7490', '#047857', '#6d28d9', '#be123c', '#18223d']],
                     'theme_header_style' => ['type' => 'select', 'label' => 'Fond de l\'en-tête du site', 'default' => 'dark', 'options' => ['light' => 'Clair (blanc)', 'dark' => 'Sombre (couleur sombre du thème)', 'brand' => 'Couleur principale']],
                     'theme_footer_style' => ['type' => 'select', 'label' => 'Fond du pied de page', 'default' => 'dark', 'options' => ['light' => 'Clair (blanc)', 'dark' => 'Sombre (couleur sombre du thème)', 'brand' => 'Couleur principale']],
                     'site_logo' => ['type' => 'image', 'label' => 'Logo (carré, PNG, JPG ou WebP)', 'default' => '', 'help' => 'Laisser vide pour garder le logo par défaut.'],

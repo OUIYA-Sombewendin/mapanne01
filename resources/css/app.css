@@ -37,6 +37,18 @@
     --color-ink-900: #0e1529;
 
     --color-whatsapp: #1fa855;
+
+    /* Accent (bleu) : titres, en-têtes de section, menu actif, bandeaux de l'admin et de l'espace pro. */
+    --color-accent-50: #edf1f6;
+    --color-accent-100: #dbe3ed;
+    --color-accent-200: #b7c7dc;
+    --color-accent-300: #89a3c6;
+    --color-accent-400: #5379ab;
+    --color-accent-500: #1d4f91;
+    --color-accent-600: #19457e;
+    --color-accent-700: #153968;
+    --color-accent-800: #112e54;
+    --color-accent-900: #0d2441;
 }
 
 @layer base {
@@ -175,10 +187,10 @@ html.admin-dark .on-color.bg-ink-800 {
     background-color: #2b3a5c;
 }
 
-/* Bandeau du tableau de bord admin : reste sombre dans les deux modes. */
+/* Bandeaux (admin et espace pro) : dégradé de la couleur d'accent, identique dans les deux modes. */
 .admin-hero {
     --color-white: #ffffff;
-    background: linear-gradient(120deg, var(--hero-from, #3a4a6b), var(--hero-to, #18223d));
+    background: linear-gradient(120deg, var(--hero-from, var(--color-accent-500)), var(--hero-to, var(--color-accent-800)));
 }
 
 /*
@@ -249,4 +261,86 @@ html.admin-dark .on-color.bg-ink-800 {
 /* Champ compact des barres de filtres. */
 @utility input-sm {
     @apply block w-auto min-w-0 rounded-lg border border-ink-200 bg-white px-3 py-1.5 text-sm text-ink-900 placeholder:text-ink-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 focus:outline-none;
+}
+
+/*
+ * Administration et espace pro : titres en couleur d'accent, en-têtes de section teintés,
+ * en-têtes de tableau colorés, boutons secondaires bleus. Variables reprises en mode sombre.
+ */
+.app-shell {
+    --heading: var(--color-accent-700);
+    --section-bg: var(--color-accent-50);
+    --tint: var(--color-accent-100);
+}
+html.admin-dark .app-shell {
+    --heading: #a9c4ec;
+    --section-bg: #16233b;
+    --tint: #22345a;
+    /* Teintes claires de l'accent assombries ; le bleu vif (500, 600) reste identique. */
+    --color-accent-50: #16233b;
+    --color-accent-100: #22345a;
+    --color-accent-200: #2f4775;
+    --color-accent-700: #a9c4ec;
+}
+.app-shell main h1:not(.admin-hero *) {
+    color: var(--heading);
+}
+.app-shell main .card h2:not(.admin-hero *),
+.app-shell main details summary.font-bold {
+    color: var(--heading);
+}
+/*
+ * Titre de carte → bandeau de section teinté sur toute la largeur, avec un trait orange à gauche
+ * (titre seul, ou ligne titre + lien « Tout voir »). S'adapte au padding de la carte.
+ */
+.app-shell main .card.p-4 { --pad: 1rem; }
+.app-shell main .card.p-5 { --pad: 1.25rem; }
+.app-shell main .card.p-6 { --pad: 1.5rem; }
+.app-shell main .card:is(.p-4, .p-5, .p-6) > :is(h2, div:has(> h2)):first-child {
+    position: relative;
+    margin: calc(var(--pad) * -1) calc(var(--pad) * -1) 1rem;
+    padding: 0.85rem var(--pad);
+    background: var(--section-bg);
+    border-bottom: 1px solid var(--tint);
+    border-radius: 1rem 1rem 0 0;
+}
+.app-shell main .card:is(.p-4, .p-5, .p-6) > :is(h2, div:has(> h2)):first-child::before {
+    content: '';
+    position: absolute;
+    top: 0.7rem;
+    bottom: 0.7rem;
+    left: 0;
+    width: 4px;
+    border-radius: 0 3px 3px 0;
+    background: var(--color-brand-500);
+}
+.app-shell main .card:is(.p-4, .p-5, .p-6) > :is(h2, div:has(> h2)):first-child h2,
+.app-shell main .card:is(.p-4, .p-5, .p-6) > h2:first-child {
+    font-weight: 800;
+}
+.app-shell .data-table thead th {
+    background: var(--section-bg);
+    color: var(--heading);
+    font-weight: 700;
+    border-bottom-color: var(--tint);
+}
+.app-shell .data-table thead th a:hover {
+    color: var(--color-brand-600);
+}
+.app-shell .data-table tbody tr:hover td {
+    background: color-mix(in srgb, var(--section-bg) 55%, transparent);
+}
+.app-shell .btn-ghost {
+    border-color: var(--color-accent-300);
+    color: var(--heading);
+}
+.app-shell .btn-ghost:hover {
+    background: var(--section-bg);
+}
+.app-shell .btn-dark:not(.admin-hero *) {
+    background-color: var(--color-accent-600);
+    color: #ffffff;
+}
+.app-shell .btn-dark:not(.admin-hero *):hover {
+    background-color: var(--color-accent-500);
 }

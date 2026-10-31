@@ -64,6 +64,8 @@
         ],
     ];
     $sections = array_filter(array_map(fn ($links) => array_values(array_filter($links, fn ($l) => $l[4])), $sections));
+    // Format commun du menu latéral : [url, actif, icône, libellé, compteur]
+    $navSections = array_map(fn ($links) => array_map(fn ($l) => [route($l[0]), $l[3], $l[1], $l[2], null], $links), $sections);
     $impersonating = session()->has(\App\Http\Controllers\Admin\ImpersonationController::SESSION_KEY);
 @endphp
 <!DOCTYPE html>
@@ -79,7 +81,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @if ($themeCss) <style>{!! $themeCss !!}</style> @endif
 </head>
-<body class="min-h-dvh bg-ink-50">
+<body class="app-shell min-h-dvh bg-ink-50">
     @if ($impersonating)
         <div class="sticky top-0 z-[60] flex flex-wrap items-center justify-center gap-3 bg-amber-400 px-4 py-2 text-sm font-medium text-amber-950">
             <span>👁 Vous êtes dans le compte de <strong>{{ $me->name }}</strong> (accès administrateur).</span>
@@ -123,30 +125,13 @@
                 @endif
             </div>
 
-            <nav class="flex-1 space-y-6 overflow-y-auto overscroll-contain px-4 py-5" x-init="followActive($el)" @scroll.debounce.150ms="rememberScroll($el)">
-                @foreach ($sections as $section => $links)
-                    <div>
-                        <p class="mb-2 px-3 text-xs font-bold tracking-[0.12em] text-ink-400 uppercase" :class="collapsed && 'lg:hidden'">{{ $section }}</p>
-                        <div class="space-y-1">
-                            @foreach ($links as [$route, $icon, $label, $active])
-                                <a href="{{ route($route) }}" title="{{ $label }}" @if ($active) data-active aria-current="page" @endif @class([
-                                    'relative flex items-center gap-3.5 rounded-xl px-3.5 py-2.5 text-[15px] transition',
-                                    'on-color bg-ink-800 font-semibold text-white shadow-md shadow-ink-800/20' => $active,
-                                    'text-ink-700 hover:bg-ink-50' => ! $active,
-                                ]) :class="collapsed && 'lg:justify-center lg:px-0'">
-                                    <x-icon :name="$icon" :class="$active ? 'size-5' : 'size-5 text-ink-500'" />
-                                    <span class="flex-1 truncate" :class="collapsed && 'lg:hidden'">{{ $label }}</span>
-                                </a>
-                            @endforeach
-                        </div>
-                    </div>
-                @endforeach
-                <div class="border-t border-ink-100 pt-4">
-                    <a href="{{ route('providers.show', $provider) }}" target="_blank" class="flex items-center gap-3.5 rounded-xl px-3.5 py-2.5 text-[15px] text-ink-700 hover:bg-ink-50" :class="collapsed && 'lg:justify-center lg:px-0'">
+            <x-side-nav :sections="$navSections" :icons="['Ventes' => 'card', 'Gestion' => 'chart', 'Compte' => 'users']">
+                <div class="mt-3 border-t border-ink-100 pt-3">
+                    <a href="{{ route('providers.show', $provider) }}" target="_blank" class="flex items-center gap-3.5 rounded-xl px-3.5 py-2.5 text-[15px] text-ink-700 hover:bg-accent-50 hover:text-accent-700" :class="collapsed && 'lg:justify-center lg:px-0'">
                         <x-icon name="external" class="size-5 text-ink-500" /><span :class="collapsed && 'lg:hidden'">Voir ma page publique</span>
                     </a>
                 </div>
-            </nav>
+            </x-side-nav>
 
             <button @click="toggleCollapse()" class="hidden h-14 shrink-0 items-center justify-center gap-2 border-t border-ink-100 text-sm text-ink-400 hover:text-ink-700 lg:flex">
                 <x-icon name="collapse" class="size-4" /><span x-text="collapsed ? '' : 'Réduire'">Réduire</span>

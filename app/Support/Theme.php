@@ -12,6 +12,8 @@ class Theme
 
     public const DEFAULT_INK = '#18223d';
 
+    public const DEFAULT_ACCENT = '#1d4f91';
+
     /** Proportion de blanc (valeur positive) ou de noir (négative) mélangée à la couleur de base. */
     private const BRAND_STEPS = [50 => .92, 100 => .84, 200 => .68, 300 => .48, 400 => .24, 500 => 0, 600 => -.13, 700 => -.28, 800 => -.42, 900 => -.55];
 
@@ -23,7 +25,14 @@ class Theme
         $brand = self::normalize(setting('theme_brand_color')) ?? self::DEFAULT_BRAND;
         $ink = self::normalize(setting('theme_ink_color')) ?? self::DEFAULT_INK;
 
+        $accent = self::normalize(setting('theme_accent_color')) ?? self::DEFAULT_ACCENT;
+
         $vars = [];
+        if ($accent !== self::DEFAULT_ACCENT) {
+            foreach (self::palette($accent, self::BRAND_STEPS) as $step => $hex) {
+                $vars[] = "--color-accent-{$step}:{$hex}";
+            }
+        }
         if ($brand !== self::DEFAULT_BRAND) {
             foreach (self::palette($brand, self::BRAND_STEPS) as $step => $hex) {
                 $vars[] = "--color-brand-{$step}:{$hex}";
@@ -34,9 +43,6 @@ class Theme
             foreach ($palette as $step => $hex) {
                 $vars[] = "--color-ink-{$step}:{$hex}";
             }
-            // Bandeau admin : fixé ici pour ne pas être inversé par le mode sombre.
-            $vars[] = "--hero-from:{$palette[600]}";
-            $vars[] = "--hero-to:{$palette[800]}";
         }
 
         return $vars ? ':root{'.implode(';', $vars).'}' : '';
