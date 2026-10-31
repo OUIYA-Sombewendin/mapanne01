@@ -12,6 +12,7 @@ use App\Models\ProviderType;
 use App\Models\Service;
 use App\Notifications\ProviderDecision;
 use App\Rules\BurkinaPhone;
+use App\Support\Listing;
 use App\Support\Notifier;
 use App\Support\Phone;
 use App\Support\ProviderProfiles;
@@ -27,19 +28,36 @@ class ProviderController extends Controller
         $filter = (string) $request->query('status', 'pending');
         $status = ProviderStatus::tryFrom($filter);
         $q = trim((string) $request->query('q'));
-        $like = '%'.str_replace(['%', '_'], ['\%', '\_'], $q).'%';
+        $like = Listing::like($q);
 
-        $providers = Provider::query()
-            ->with(['user:id,name,phone,email,is_active', 'city:id,name'])
+        $query = Provider::query()
+            ->with(['user:id,name,phone,email,is_active', 'city:id,name', 'lock'])
             ->when($status, fn ($query) => $query->where('status', $status))
             ->when($filter === 'review', fn ($query) => $query->where('needs_review', true))
             ->when($filter === 'featured', fn ($query) => $query->where('is_featured', true))
             ->when($request->query('type'), fn ($query, $type) => $query->where('type', $type))
+            ->when($request->query('city'), fn ($query, $city) => $query->where('city_id', $city))
+            ->when(Listing::flag($request, 'night') !== null, fn ($query) => $query->where('night_service', Listing::flag($request, 'night')))
+            ->when(Listing::flag($request, 'formal') !== null, fn ($query) => $query->where('is_formal', Listing::flag($request, 'formal')))
+            ->when(Listing::flag($request, 'photos') !== null, fn ($query) => Listing::flag($request, 'photos') ? $query->has('photos') : $query->doesntHave('photos'))
+            ->when(Listing::flag($request, 'blocked') !== null, fn ($query) => $query->whereHas('user', fn ($u) => $u->where('is_active', ! Listing::flag($request, 'blocked'))))
+            ->when($request->query('from'), fn ($query, $d) => $query->whereDate('providers.created_at', '>=', $d))
             ->when($q !== '', fn ($query) => $query->where(fn ($w) => $w
                 ->where('business_name', 'ilike', $like)
                 ->orWhereHas('user', fn ($u) => $u->where('email', 'ilike', $like))
-                ->orWhere('phone', 'like', '%'.preg_replace('/\D/', '', $q).'%')))
-            ->orderBy($status === ProviderStatus::Pending ? 'created_at' : 'updated_at', $status === ProviderStatus::Pending ? 'asc' : 'desc')
+                ->orWhere('phone', 'like', '%'.preg_replace('/\D/', '', $q).'%')));
+
+        // Par défaut : les plus anciennes inscriptions en attente d'abord, sinon les dernières modifications.
+        $pendingFirst = $status === ProviderStatus::Pending;
+        $providers = Listing::sort($query, $request, [
+            'name' => 'providers.business_name',
+            'type' => 'providers.type',
+            'city' => fn ($q, $dir) => $q->orderBy(City::select('name')->whereColumn('cities.id', 'providers.city_id'), $dir),
+            'status' => 'providers.status',
+            'rating' => 'providers.rating_avg',
+            'created' => 'providers.created_at',
+            'updated' => 'providers.updated_at',
+        ], $pendingFirst ? 'created' : 'updated', $pendingFirst ? 'asc' : 'desc')
             ->paginate(25)
             ->withQueryString();
 
@@ -49,6 +67,7 @@ class ProviderController extends Controller
             'status' => $status,
             'statuses' => ProviderStatus::cases(),
             'types' => ProviderType::cached()->values(),
+            'cities' => City::orderBy('name')->get(['id', 'name']),
             'counts' => Provider::selectRaw('status, COUNT(*) AS n')->groupBy('status')->pluck('n', 'status'),
             'reviewCount' => Provider::where('needs_review', true)->count(),
         ]);

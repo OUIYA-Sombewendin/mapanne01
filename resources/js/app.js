@@ -227,5 +227,41 @@ Alpine.data('roleForm', (count, total) => ({
     groupVisible(el) { this.search; return !this.search || [...el.querySelectorAll('[data-perm]')].some((p) => this.matches(p)); },
 }));
 
+// Filtres instantanés : chaque choix relance la liste ; la saisie de texte attend une courte pause.
+// Après rechargement, le champ en cours de saisie retrouve le focus (curseur à la fin).
+Alpine.data('autoFilter', (extra = {}) => ({
+    ...extra,
+    init() {
+        let name = null;
+        try { name = sessionStorage.getItem('mp-filter-focus'); sessionStorage.removeItem('mp-filter-focus'); } catch { /* indisponible */ }
+        const field = name && this.$el.querySelector(`[name="${CSS.escape(name)}"]`);
+        if (field && typeof field.setSelectionRange === 'function') {
+            field.focus();
+            field.setSelectionRange(field.value.length, field.value.length);
+        }
+        this.$el.addEventListener('change', (e) => { if (!this.isText(e.target)) this.submit(); });
+        let timer;
+        this.$el.addEventListener('input', (e) => {
+            if (!this.isText(e.target)) return;
+            clearTimeout(timer);
+            timer = setTimeout(() => this.submit(e.target), 600);
+        });
+    },
+    isText(el) { return el.matches('input[type=search], input[type=text], input:not([type])'); },
+    submit(focused = null) {
+        if (focused?.name) { try { sessionStorage.setItem('mp-filter-focus', focused.name); } catch { /* indisponible */ } }
+        // Adresse propre : sans champs vides ni doublons (le dernier gagne), retour à la page 1.
+        const params = new Map();
+        for (const [name, value] of new FormData(this.$el)) {
+            if (name.endsWith('[]')) { if (value !== '') params.set(`${name}#${params.size}`, [name, value]); continue; }
+            params.delete(name);
+            if (value !== '') params.set(name, [name, value]);
+        }
+        const query = new URLSearchParams([...params.values()]).toString();
+        const action = this.$el.getAttribute('action') || window.location.pathname;
+        window.location.assign(query ? `${action}?${query}` : action);
+    },
+}));
+
 window.Alpine = Alpine;
 Alpine.start();

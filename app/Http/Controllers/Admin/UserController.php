@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
+use App\Models\City;
 use App\Models\Role;
 use App\Models\User;
+use App\Support\Listing;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,17 +22,30 @@ class UserController extends Controller
         $q = trim((string) $request->query('q'));
 
         return view('admin.users.index', [
-            'users' => User::query()
+            'users' => Listing::sort(User::query()
                 ->with(['provider:id,user_id,business_name,slug', 'adminRole:id,name', 'lock'])
                 ->when($role, fn ($query) => $query->where('role', $role))
                 ->when($request->query('admin_role'), fn ($query, $id) => $query->where('admin_role_id', $id))
+                ->when(Listing::flag($request, 'active') !== null, fn ($query) => $query->where('is_active', Listing::flag($request, 'active')))
+                ->when(Listing::flag($request, 'verified') !== null, fn ($query) => Listing::flag($request, 'verified') ? $query->whereNotNull('email_verified_at') : $query->whereNull('email_verified_at'))
+                ->when($request->query('city'), fn ($query, $city) => $query->where('city_id', $city))
+                ->when($request->query('login') === 'never', fn ($query) => $query->whereNull('last_login_at'))
+                ->when($request->query('login') === '30d', fn ($query) => $query->where('last_login_at', '>=', now()->subDays(30)))
+                ->when($request->query('from'), fn ($query, $d) => $query->whereDate('created_at', '>=', $d))
                 ->when($q !== '', fn ($query) => $query->where(fn ($w) => $w
-                    ->where('name', 'ilike', "%$q%")
-                    ->orWhere('email', 'ilike', "%$q%")
-                    ->orWhere('phone', 'like', '%'.preg_replace('/\D/', '', $q).'%')))
-                ->latest()
+                    ->where('name', 'ilike', Listing::like($q))
+                    ->orWhere('email', 'ilike', Listing::like($q))
+                    ->orWhere('phone', 'like', '%'.preg_replace('/\D/', '', $q).'%'))), $request, [
+                        'name' => 'name',
+                        'email' => 'email',
+                        'role' => 'role',
+                        'created' => 'created_at',
+                        'login' => 'last_login_at',
+                        'active' => 'is_active',
+                    ], 'created')
                 ->paginate(30)
                 ->withQueryString(),
+            'cities' => City::orderBy('name')->get(['id', 'name']),
             'role' => $role,
             'roles' => UserRole::cases(),
             'adminRoles' => Role::orderByDesc('is_system')->orderBy('name')->get(['id', 'name', 'permissions']),

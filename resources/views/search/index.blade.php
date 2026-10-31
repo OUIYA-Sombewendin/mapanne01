@@ -1,7 +1,7 @@
 <x-layouts.app title="Trouver un professionnel" wide>
     @php($activeFilters = collect($filters)->only(['type', 'service', 'open_now', 'night', 'available'])->filter()->count())
 
-    <form action="{{ route('search') }}" method="GET" x-data="{ filters: false }" class="mb-4">
+    <form action="{{ route('search') }}" method="GET" x-data="autoFilter({ filters: false })" class="mb-4">
         <input type="hidden" name="lat" value="{{ $filters['lat'] }}">
         <input type="hidden" name="lng" value="{{ $filters['lng'] }}">
 

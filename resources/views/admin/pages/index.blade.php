@@ -9,7 +9,7 @@
 
     <div class="card overflow-x-auto">
         <table class="data-table">
-            <thead><tr><th>Titre</th><th>Adresse</th><th>Statut</th><th>Pied de page</th><th>Modifiée</th><th></th></tr></thead>
+            <thead><tr><x-sort-th column="title" label="Titre" /><x-sort-th column="slug" label="Adresse" /><th>Statut</th><th>Pied de page</th><x-sort-th column="updated" label="Modifiée" /><th></th></tr></thead>
             <tbody>
                 @foreach ($pages as $page)
                     <tr>

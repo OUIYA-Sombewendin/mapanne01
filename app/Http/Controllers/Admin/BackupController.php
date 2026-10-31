@@ -14,10 +14,14 @@ use Throwable;
 
 class BackupController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
+        $backups = collect(Backup::list());
+        $key = $request->query('sort') === 'size' ? 'size' : 'date';
+        $backups = $request->query('dir') === 'asc' ? $backups->sortBy($key) : $backups->sortByDesc($key);
+
         return view('admin.backups', [
-            'backups' => Backup::list(),
+            'backups' => $backups->values()->all(),
             'tool' => Backup::binary('pg_dump'),
         ]);
     }

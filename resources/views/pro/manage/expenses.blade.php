@@ -2,6 +2,18 @@
 <x-layouts.pro title="Dépenses">
     <h1 class="mb-4 text-2xl font-extrabold">Dépenses</h1>
     @include('pro.manage._period')
+    <x-filter-bar :keys="['q', 'category', 'payment']" :keep="['period', 'from', 'to']">
+        @foreach (request()->only(['period', 'from', 'to']) as $k => $v) <input type="hidden" name="{{ $k }}" value="{{ $v }}"> @endforeach
+        <input type="search" name="q" value="{{ request('q') }}" class="input-sm w-48" placeholder="Description">
+        <select name="category" class="input-sm">
+            <option value="">Toutes catégories</option>
+            @foreach ($categories as $c) <option @selected(request('category') === $c)>{{ $c }}</option> @endforeach
+        </select>
+        <select name="payment" class="input-sm">
+            <option value="">Tous les paiements</option>
+            @foreach ($paymentMethods as $m) <option @selected(request('payment') === $m)>{{ $m }}</option> @endforeach
+        </select>
+    </x-filter-bar>
 
     <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div class="space-y-5">
@@ -25,7 +37,7 @@
 
             <div class="card overflow-x-auto">
                 <table class="data-table">
-                    <thead><tr><th>Date</th><th>Catégorie</th><th>Description</th><th class="text-right">Montant</th><th></th></tr></thead>
+                    <thead><tr><x-sort-th column="date" label="Date" /><x-sort-th column="category" label="Catégorie" /><th>Description</th><x-sort-th column="amount" label="Montant" align="right" /><th></th></tr></thead>
                     <tbody>
                         @forelse ($expenses as $e)
                             <tr>

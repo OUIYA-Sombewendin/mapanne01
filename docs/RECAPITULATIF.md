@@ -222,6 +222,25 @@ Dans le menu admin, la section **Prestataires** liste chaque type séparément.
   - exports CSV (Excel) : prestataires, utilisateurs, produits, avis, abonnements, zones ; les réglages s'exportent en JSON, **sans mots de passe ni secrets** ;
   - imports : villes et quartiers, services, catégories de pièces, catalogue d'une boutique, réglages JSON.
 - **Recherche globale** dans la barre du haut : prestataires, utilisateurs, pièces.
+- **Listes harmonisées** (admin et espace pro) :
+  - filtres appliqués **dès qu'on choisit une valeur** (la recherche texte s'applique après une courte pause) ;
+  - compteur de filtres actifs et bouton « Réinitialiser » ;
+  - **tri en cliquant sur les en-têtes de colonnes** (un second clic inverse l'ordre).
+  - Filtres ajoutés par liste :
+
+    | Liste | Filtres |
+    |---|---|
+    | Prestataires | ville, nuit, entreprise, photos, compte bloqué, date d'inscription |
+    | Comptes | rôle admin, statut, email confirmé, ville, dernière connexion, date d'inscription |
+    | Pièces | boutique, état, stock, prix minimum et maximum |
+    | Avis | note, avec commentaire, recherche, date |
+    | Signalements | motif, fiche ou avis, recherche, date |
+    | Abonnements | offre, moyen de paiement |
+    | Catalogue pro | catégorie, état, promo, à réapprovisionner, masqués |
+    | Stock | catégorie, rayon, stock à zéro, non publiées |
+    | Mouvements de stock | motif, dates |
+    | Factures | paiement, vendeur, dates |
+    | Dépenses | catégorie, paiement, recherche |
 - **Mode sombre** et menu réductible, mémorisés sur l'appareil ; le menu défile tout seul jusqu'à la page ouverte.
 - **Cloche de notifications** : ce qui attend une action.
 

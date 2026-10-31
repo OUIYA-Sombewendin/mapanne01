@@ -2,9 +2,16 @@
     <h1 class="mb-1 text-2xl font-extrabold">Éléments verrouillés</h1>
     <p class="mb-5 text-sm text-ink-500">Un élément verrouillé ne peut plus être modifié, validé, suspendu ni supprimé depuis l'administration, même par erreur. Le verrou ne gêne pas l'utilisateur concerné. Posez un verrou avec le bouton 🔓 présent dans chaque liste.</p>
 
+    <x-filter-bar :keys="['type']">
+        <select name="type" class="input-sm">
+            <option value="">Tous les éléments</option>
+            @foreach (\App\Models\Lock::TYPES as $key => [, $label]) <option value="{{ $key }}" @selected(request('type') === $key)>{{ $label }}</option> @endforeach
+        </select>
+    </x-filter-bar>
+
     <div class="card overflow-x-auto">
         <table class="data-table">
-            <thead><tr><th>Élément</th><th>Type</th><th>Motif</th><th>Verrouillé par</th><th>Depuis</th><th></th></tr></thead>
+            <thead><tr><th>Élément</th><x-sort-th column="type" label="Type" /><th>Motif</th><th>Verrouillé par</th><x-sort-th column="date" label="Depuis" /><th></th></tr></thead>
             <tbody>
                 @forelse ($locks as $lock)
                     <tr>

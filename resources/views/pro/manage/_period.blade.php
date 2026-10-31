@@ -1,5 +1,6 @@
 {{-- Sélecteur de période partagé (dépenses, rapports). --}}
 <form class="mb-4 flex flex-wrap items-end gap-2" x-data="{ period: '{{ $period }}' }">
+    @foreach (request()->only(['q', 'category', 'payment', 'sort', 'dir']) as $k => $v) <input type="hidden" name="{{ $k }}" value="{{ $v }}"> @endforeach
     <div>
         <label class="text-xs text-ink-500" for="period">Période</label>
         <select id="period" name="period" x-model="period" class="input" @change="period !== 'custom' && $el.form.submit()">

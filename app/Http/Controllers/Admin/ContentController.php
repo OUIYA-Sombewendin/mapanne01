@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Page;
 use App\Models\ProviderType;
+use App\Support\Listing;
 use App\Support\ProviderProfiles;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -63,9 +64,15 @@ class ContentController extends Controller
 
     // Pages de contenu ---------------------------------------------------------------
 
-    public function pages(): View
+    public function pages(Request $request): View
     {
-        return view('admin.pages.index', ['pages' => Page::orderBy('position')->get()]);
+        return view('admin.pages.index', ['pages' => Listing::sort(Page::with('lock')
+            ->when(Listing::flag($request, 'published') !== null, fn ($q) => $q->where('is_published', Listing::flag($request, 'published'))), $request, [
+                'title' => 'title',
+                'slug' => 'slug',
+                'position' => 'position',
+                'updated' => 'updated_at',
+            ], 'position', 'asc')->get()]);
     }
 
     public function createPage(): View

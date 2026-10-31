@@ -8,26 +8,47 @@
 
     <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
         <div class="space-y-5">
-            <form class="flex flex-wrap gap-2">
-                <input name="q" value="{{ request('q') }}" class="input max-w-xs" placeholder="Nom du produit">
-                <select name="category" class="input max-w-56">
+            <x-filter-bar :keys="['q', 'category', 'filter', 'shop', 'condition', 'stock', 'price_min', 'price_max']" class="!mb-0">
+                <input type="search" name="q" value="{{ request('q') }}" class="input-sm w-48" placeholder="Nom, marque, référence">
+                <select name="category" class="input-sm">
                     <option value="">Toutes catégories</option>
                     @foreach ($categories as $c)
                         <option value="{{ $c->id }}" @selected(request('category') == $c->id)>{{ $c->name }}</option>
                     @endforeach
                 </select>
-                <select name="filter" class="input max-w-48">
-                    <option value="">Tous</option>
+                <select name="shop" class="input-sm max-w-48">
+                    <option value="">Toutes les boutiques</option>
+                    @foreach ($shops as $s) <option value="{{ $s->id }}" @selected(request('shop') == $s->id)>{{ $s->business_name }}</option> @endforeach
+                </select>
+                <select name="filter" class="input-sm">
+                    <option value="">Modération : tous</option>
                     <option value="pending" @selected(request('filter') === 'pending')>En attente ({{ $pendingCount }})</option>
                     <option value="hidden" @selected(request('filter') === 'hidden')>Masqués</option>
                     <option value="featured" @selected(request('filter') === 'featured')>À la une</option>
                 </select>
-                <button class="btn btn-dark">Filtrer</button>
-            </form>
+                <select name="condition" class="input-sm">
+                    <option value="">Neuf et occasion</option>
+                    @foreach (\App\Models\Product::CONDITIONS as $k => $l) <option value="{{ $k }}" @selected(request('condition') === $k)>{{ $l }}</option> @endforeach
+                </select>
+                <select name="stock" class="input-sm">
+                    <option value="">Stock : tous</option>
+                    <option value="in" @selected(request('stock') === 'in')>En stock</option>
+                    <option value="out" @selected(request('stock') === 'out')>En rupture</option>
+                </select>
+                <input type="number" name="price_min" value="{{ request('price_min') }}" class="input-sm w-28" placeholder="Prix min." min="0">
+                <input type="number" name="price_max" value="{{ request('price_max') }}" class="input-sm w-28" placeholder="Prix max." min="0">
+            </x-filter-bar>
 
             <div class="card overflow-x-auto">
                 <table class="data-table">
-                    <thead><tr><th>Produit</th><th>Boutique</th><th>Prix</th><th>Stock</th><th>Vues / contacts</th><th>Modération</th></tr></thead>
+                    <thead><tr>
+                        <x-sort-th column="name" label="Produit" />
+                        <x-sort-th column="shop" label="Boutique" />
+                        <x-sort-th column="price" label="Prix" />
+                        <x-sort-th column="stock" label="Stock" />
+                        <x-sort-th column="views" label="Vues / contacts" />
+                        <th>Modération</th>
+                    </tr></thead>
                     <tbody>
                         @forelse ($products as $p)
                             <tr @class(['opacity-60' => $p->is_hidden])>

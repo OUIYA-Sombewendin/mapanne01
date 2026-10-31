@@ -21,7 +21,7 @@
 
     <div class="card overflow-x-auto">
         <table class="data-table">
-            <thead><tr><th>Fichier</th><th>Date</th><th class="text-right">Taille</th><th></th></tr></thead>
+            <thead><tr><th>Fichier</th><x-sort-th column="date" label="Date" /><x-sort-th column="size" label="Taille" align="right" /><th></th></tr></thead>
             <tbody>
                 @forelse ($backups as $b)
                     <tr x-data="{ restore: false }">

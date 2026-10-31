@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Lock;
+use App\Support\Listing;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -13,10 +14,16 @@ use Illuminate\View\View;
 /** Verrous anti-erreur : liste, pose et retrait (permission locks.manage). */
 class LockController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
+        $types = collect(Lock::TYPES)->map(fn ($t) => (new $t[0])->getMorphClass());
+
         return view('admin.locks', [
-            'locks' => Lock::with(['lockable', 'locker:id,name'])->latest('id')->paginate(50),
+            'locks' => Listing::sort(Lock::with(['lockable', 'locker:id,name'])
+                ->when($types[$request->query('type')] ?? null, fn ($q, $class) => $q->where('lockable_type', $class)), $request, [
+                    'date' => 'created_at',
+                    'type' => 'lockable_type',
+                ], 'date')->paginate(50)->withQueryString(),
         ]);
     }
 

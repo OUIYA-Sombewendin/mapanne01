@@ -29,16 +29,35 @@
         @endforeach
     </div>
 
-    <form class="mb-4 flex flex-wrap gap-2">
-        <input name="q" value="{{ request('q') }}" class="input max-w-xs" placeholder="Rechercher dans mon catalogue">
-        <select name="filter" class="input max-w-52" onchange="this.form.submit()">
+    <x-filter-bar :keys="['q', 'filter', 'category', 'condition']">
+        <input type="search" name="q" value="{{ request('q') }}" class="input-sm w-56" placeholder="Nom, marque, référence">
+        <select name="filter" class="input-sm">
             <option value="">Tous les produits</option>
+            <option value="low" @selected(request('filter') === 'low')>À réapprovisionner</option>
             <option value="out" @selected(request('filter') === 'out')>En rupture</option>
-            <option value="inactive" @selected(request('filter') === 'inactive')>Retirés de la vente</option>
+            <option value="promo" @selected(request('filter') === 'promo')>En promotion</option>
+            <option value="inactive" @selected(request('filter') === 'inactive')>Non publiés</option>
             <option value="pending" @selected(request('filter') === 'pending')>En attente de vérification</option>
+            <option value="hidden" @selected(request('filter') === 'hidden')>Masqués par l'équipe</option>
         </select>
-        <button class="btn btn-dark">Filtrer</button>
-    </form>
+        <select name="category" class="input-sm">
+            <option value="">Toutes catégories</option>
+            @foreach ($categories as $c) <option value="{{ $c->id }}" @selected(request('category') == $c->id)>{{ $c->name }}</option> @endforeach
+        </select>
+        <select name="condition" class="input-sm">
+            <option value="">Neuf et occasion</option>
+            @foreach (\App\Models\Product::CONDITIONS as $k => $l) <option value="{{ $k }}" @selected(request('condition') === $k)>{{ $l }}</option> @endforeach
+        </select>
+        <select name="sort" class="input-sm ml-auto" aria-label="Trier">
+            @foreach (['created' => 'Trier : ajout', 'name' => 'Trier : nom', 'price' => 'Trier : prix', 'stock' => 'Trier : stock', 'views' => 'Trier : vues', 'contacts' => 'Trier : contacts'] as $k => $l)
+                <option value="{{ $k }}" @selected(request('sort', 'created') === $k)>{{ $l }}</option>
+            @endforeach
+        </select>
+        <select name="dir" class="input-sm" aria-label="Ordre">
+            <option value="desc" @selected(request('dir', 'desc') === 'desc')>Décroissant</option>
+            <option value="asc" @selected(request('dir') === 'asc')>Croissant</option>
+        </select>
+    </x-filter-bar>
 
     <div class="space-y-3">
         @forelse ($products as $product)

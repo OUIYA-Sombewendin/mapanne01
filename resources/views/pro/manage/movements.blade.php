@@ -2,25 +2,30 @@
 <div class="mb-4"><x-back :href="route('pro.manage.stock')" label="Stock" /></div>
     <h1 class="mb-4 text-2xl font-extrabold">Historique du stock</h1>
 
-    <form class="mb-3 flex flex-wrap gap-2">
-        <select name="product" class="input max-w-xs">
+    <x-filter-bar :keys="['product', 'type', 'reason', 'from', 'to']">
+        <select name="product" class="input-sm max-w-xs">
             <option value="">Toutes les pièces</option>
             @foreach ($products as $p)
                 <option value="{{ $p->id }}" @selected(request('product') == $p->id)>{{ $p->name }}</option>
             @endforeach
         </select>
-        <select name="type" class="input max-w-44">
+        <select name="type" class="input-sm">
             <option value="">Tous les mouvements</option>
             <option value="in" @selected(request('type') === 'in')>Entrées</option>
             <option value="out" @selected(request('type') === 'out')>Sorties</option>
             <option value="adjust" @selected(request('type') === 'adjust')>Inventaires</option>
         </select>
-        <button class="btn btn-dark">Filtrer</button>
-    </form>
+        <select name="reason" class="input-sm">
+            <option value="">Tous les motifs</option>
+            @foreach ($reasons as $k => $l) <option value="{{ $k }}" @selected(request('reason') === $k)>{{ $l }}</option> @endforeach
+        </select>
+        <label class="flex items-center gap-1 text-sm text-ink-500">Du <input type="date" name="from" value="{{ request('from') }}" class="input-sm"></label>
+        <label class="flex items-center gap-1 text-sm text-ink-500">au <input type="date" name="to" value="{{ request('to') }}" class="input-sm"></label>
+    </x-filter-bar>
 
     <div class="card overflow-x-auto">
         <table class="data-table">
-            <thead><tr><th>Date</th><th>Pièce</th><th>Motif</th><th class="text-right">Quantité</th><th class="text-right">Stock après</th><th>Note</th><th>Par</th></tr></thead>
+            <thead><tr><x-sort-th column="date" label="Date" /><x-sort-th column="product" label="Pièce" /><th>Motif</th><x-sort-th column="quantity" label="Quantité" align="right" /><th class="text-right">Stock après</th><th>Note</th><th>Par</th></tr></thead>
             <tbody>
                 @forelse ($movements as $m)
                     <tr>

@@ -1,20 +1,47 @@
 <x-layouts.admin title="Utilisateurs · Admin">
     <h1 class="mb-4 text-2xl font-extrabold">Utilisateurs</h1>
 
-    <form class="mb-4 flex flex-wrap gap-2">
-        <input name="q" value="{{ request('q') }}" class="input max-w-xs" placeholder="Nom, téléphone, email">
-        <select name="role" class="input max-w-48">
-            <option value="">Tous les rôles</option>
+    <x-filter-bar :keys="['q', 'role', 'admin_role', 'active', 'verified', 'city', 'login', 'from']">
+        <input type="search" name="q" value="{{ request('q') }}" class="input-sm w-56" placeholder="Nom, téléphone, email">
+        <select name="role" class="input-sm">
+            <option value="">Tous les comptes</option>
             @foreach ($roles as $r)
                 <option value="{{ $r->value }}" @selected($role === $r)>{{ $r->label() }}</option>
             @endforeach
         </select>
-        <button class="btn btn-dark">Filtrer</button>
-    </form>
+        <select name="admin_role" class="input-sm">
+            <option value="">Rôle admin : tous</option>
+            @foreach ($adminRoles as $ar) <option value="{{ $ar->id }}" @selected(request('admin_role') == $ar->id)>{{ $ar->name }}</option> @endforeach
+        </select>
+        <select name="active" class="input-sm">
+            <option value="">Statut : tous</option>
+            <option value="1" @selected(request('active') === '1')>Actifs</option>
+            <option value="0" @selected(request('active') === '0')>Bloqués</option>
+        </select>
+        @include('admin._flag', ['name' => 'verified', 'label' => 'Email confirmé'])
+        <select name="city" class="input-sm">
+            <option value="">Toutes les villes</option>
+            @foreach ($cities as $c) <option value="{{ $c->id }}" @selected(request('city') == $c->id)>{{ $c->name }}</option> @endforeach
+        </select>
+        <select name="login" class="input-sm">
+            <option value="">Connexion : toutes</option>
+            <option value="30d" @selected(request('login') === '30d')>Connectés ces 30 jours</option>
+            <option value="never" @selected(request('login') === 'never')>Jamais connectés</option>
+        </select>
+        <label class="flex items-center gap-1 text-sm text-ink-500">Inscrits depuis <input type="date" name="from" value="{{ request('from') }}" class="input-sm"></label>
+    </x-filter-bar>
 
     <div class="card overflow-x-auto">
         <table class="data-table">
-            <thead><tr><th>Nom</th><th>Email / téléphone</th><th>Rôle</th><th class="hidden 2xl:table-cell">Inscrit</th><th class="hidden xl:table-cell">Dernière connexion</th><th>Statut</th><th>Actions</th></tr></thead>
+            <thead><tr>
+                <x-sort-th column="name" label="Nom" />
+                <x-sort-th column="email" label="Email / téléphone" />
+                <x-sort-th column="role" label="Rôle" />
+                <x-sort-th column="created" label="Inscrit" class="hidden 2xl:table-cell" />
+                <x-sort-th column="login" label="Dernière connexion" class="hidden xl:table-cell" />
+                <x-sort-th column="active" label="Statut" />
+                <th>Actions</th>
+            </tr></thead>
             <tbody>
                 @foreach ($users as $u)
                     <tr>

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\User;
 use App\Support\Csv;
+use App\Support\Listing;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -18,7 +19,11 @@ class HistoryController extends Controller
     public function index(Request $request): View
     {
         return view('admin.history', [
-            'logs' => $this->query($request)->with('user:id,name')->latest('id')->paginate(50)->withQueryString(),
+            'logs' => Listing::sort($this->query($request)->with('user:id,name'), $request, [
+                'date' => 'created_at',
+                'action' => 'action',
+                'user' => fn ($q, $dir) => $q->orderBy(User::select('name')->whereColumn('users.id', 'activity_logs.user_id'), $dir),
+            ], 'date')->paginate(50)->withQueryString(),
             'admins' => User::whereIn('id', ActivityLog::query()->select('user_id')->whereNotNull('user_id')->distinct())->orderBy('name')->get(['id', 'name']),
             'domains' => [
                 'provider' => 'Prestataires', 'user' => 'Utilisateurs', 'review' => 'Avis', 'report' => 'Signalements',

@@ -12,20 +12,31 @@
 
     <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div>
-            <form class="mb-3 flex flex-wrap gap-2">
-                <input name="q" value="{{ request('q') }}" class="input max-w-xs" placeholder="Nom ou référence">
-                <select name="filter" class="input max-w-52" onchange="this.form.submit()">
+            <x-filter-bar :keys="['q', 'filter', 'category', 'shelf']">
+                <input type="search" name="q" value="{{ request('q') }}" class="input-sm w-48" placeholder="Nom, référence, rayon">
+                <select name="filter" class="input-sm">
                     <option value="">Toutes les pièces</option>
                     <option value="low" @selected(request('filter') === 'low')>Sous le seuil d'alerte</option>
+                    <option value="out" @selected(request('filter') === 'out')>Stock à zéro</option>
                     <option value="nocost" @selected(request('filter') === 'nocost')>Sans prix d'achat</option>
+                    <option value="unpublished" @selected(request('filter') === 'unpublished')>Non publiées</option>
                 </select>
-                <button class="btn btn-dark">Filtrer</button>
-                <a href="{{ route('pro.manage.stock.movements') }}" class="btn btn-ghost">Historique des mouvements</a>
-            </form>
+                <select name="category" class="input-sm">
+                    <option value="">Toutes catégories</option>
+                    @foreach ($categories as $c) <option value="{{ $c->id }}" @selected(request('category') == $c->id)>{{ $c->name }}</option> @endforeach
+                </select>
+                @if ($shelves->isNotEmpty())
+                    <select name="shelf" class="input-sm">
+                        <option value="">Tous les rayons</option>
+                        @foreach ($shelves as $s) <option @selected(request('shelf') === $s)>{{ $s }}</option> @endforeach
+                    </select>
+                @endif
+                <a href="{{ route('pro.manage.stock.movements') }}" class="ml-auto text-sm font-medium text-brand-600">Historique des mouvements →</a>
+            </x-filter-bar>
 
             <div class="card overflow-x-auto">
                 <table class="data-table">
-                    <thead><tr><th>Pièce</th><th>Empl.</th><th class="text-right">Stock</th><th class="text-right">Achat</th><th class="text-right">Vente</th><th class="text-right">Marge</th><th></th></tr></thead>
+                    <thead><tr><x-sort-th column="name" label="Pièce" /><x-sort-th column="shelf" label="Empl." /><x-sort-th column="stock" label="Stock" align="right" /><x-sort-th column="cost" label="Achat" align="right" /><x-sort-th column="price" label="Vente" align="right" /><x-sort-th column="margin" label="Marge" align="right" /><th></th></tr></thead>
                     <tbody>
                         @forelse ($products as $p)
                             <tr>

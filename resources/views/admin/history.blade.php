@@ -9,23 +9,23 @@
         @endcan
     </div>
 
-    <form class="card mb-4 grid gap-2 p-4 sm:grid-cols-2 lg:grid-cols-6">
-        <input name="q" value="{{ request('q') }}" class="input lg:col-span-2" placeholder="Rechercher dans les détails…">
-        <select name="domain" class="input">
+    <x-filter-bar :keys="['q', 'domain', 'user', 'from', 'to']">
+        <input type="search" name="q" value="{{ request('q') }}" class="input-sm w-56" placeholder="Rechercher dans les détails…">
+        <select name="domain" class="input-sm">
             <option value="">Tous les domaines</option>
             @foreach ($domains as $key => $label) <option value="{{ $key }}" @selected(request('domain') === $key)>{{ $label }}</option> @endforeach
         </select>
-        <select name="user" class="input">
+        <select name="user" class="input-sm">
             <option value="">Toute l'équipe</option>
             @foreach ($admins as $a) <option value="{{ $a->id }}" @selected(request('user') == $a->id)>{{ $a->name }}</option> @endforeach
         </select>
-        <input type="date" name="from" value="{{ request('from') }}" class="input" aria-label="Du">
-        <div class="flex gap-2"><input type="date" name="to" value="{{ request('to') }}" class="input" aria-label="Au"><button class="btn btn-dark">OK</button></div>
-    </form>
+        <label class="flex items-center gap-1 text-sm text-ink-500">Du <input type="date" name="from" value="{{ request('from') }}" class="input-sm"></label>
+        <label class="flex items-center gap-1 text-sm text-ink-500">au <input type="date" name="to" value="{{ request('to') }}" class="input-sm"></label>
+    </x-filter-bar>
 
     <div class="card overflow-x-auto">
         <table class="data-table">
-            <thead><tr><th>Date</th><th>Par</th><th>Action</th><th>Objet</th><th>Détails</th></tr></thead>
+            <thead><tr><x-sort-th column="date" label="Date" /><x-sort-th column="user" label="Par" /><x-sort-th column="action" label="Action" /><th>Objet</th><th>Détails</th></tr></thead>
             <tbody>
                 @forelse ($logs as $log)
                     <tr>

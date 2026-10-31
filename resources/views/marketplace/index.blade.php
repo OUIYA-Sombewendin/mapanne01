@@ -6,7 +6,7 @@
         <p class="text-sm text-ink-500">Trouvez la pièce et la boutique la plus proche, puis contactez-la directement.</p>
     </div>
 
-    <form action="{{ route('products.index') }}" method="GET" x-data="{ filters: {{ $activeFilters ? 'true' : 'false' }} }">
+    <form action="{{ route('products.index') }}" method="GET" x-data="autoFilter({ filters: {{ $activeFilters ? 'true' : 'false' }} })">
         <input type="hidden" name="lat" value="{{ $filters['lat'] }}">
         <input type="hidden" name="lng" value="{{ $filters['lng'] }}">
         @if ($filters['category']) <input type="hidden" name="category" value="{{ $filters['category'] }}"> @endif
@@ -32,7 +32,7 @@
             @if ($center)
                 <span class="text-ink-500">Près de <strong class="text-ink-800">{{ $center['label'] }}</strong></span>
             @endif
-            <select name="sort" class="input ml-auto w-auto py-1.5" onchange="this.form.submit()" aria-label="Trier">
+            <select name="sort" class="input ml-auto w-auto py-1.5" aria-label="Trier">
                 @foreach ($sorts as $value => $label)
                     @continue($value === 'distance' && ! $center)
                     <option value="{{ $value }}" @selected($filters['sort'] === $value)>{{ $label }}</option>

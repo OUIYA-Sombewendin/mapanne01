@@ -11,6 +11,7 @@ use App\Models\Provider;
 use App\Support\CatalogImporter;
 use App\Support\ImageOptimizer;
 use App\Support\Inventory;
+use App\Support\Listing;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -29,18 +30,31 @@ class ProductController extends Controller
         $shop = $this->shop($request);
         $q = trim((string) $request->query('q'));
 
-        $products = $shop->products()
+        $products = Listing::sort($shop->products()
             ->with(['photos', 'category:id,name'])
-            ->when($q !== '', fn ($query) => $query->where('name', 'ilike', '%'.str_replace(['%', '_'], ['\%', '\_'], $q).'%'))
+            ->when($q !== '', fn ($query) => $query->where(fn ($w) => $w->where('name', 'ilike', Listing::like($q))
+                ->orWhere('reference', 'ilike', Listing::like($q))->orWhere('brand', 'ilike', Listing::like($q))))
             ->when($request->query('filter') === 'out', fn ($query) => $query->where('stock', 0)->where('on_order', false))
+            ->when($request->query('filter') === 'low', fn ($query) => $query->where('on_order', false)->whereRaw('stock <= COALESCE(stock_alert, 0)'))
             ->when($request->query('filter') === 'inactive', fn ($query) => $query->where('is_active', false))
             ->when($request->query('filter') === 'pending', fn ($query) => $query->whereNull('approved_at'))
-            ->latest()
+            ->when($request->query('filter') === 'promo', fn ($query) => $query->whereNotNull('compare_at_price'))
+            ->when($request->query('filter') === 'hidden', fn ($query) => $query->where('is_hidden', true))
+            ->when($request->query('category'), fn ($query, $id) => $query->where('part_category_id', $id))
+            ->when($request->query('condition'), fn ($query, $c) => $query->where('condition', $c)), $request, [
+                'created' => 'created_at',
+                'name' => 'name',
+                'price' => 'price',
+                'stock' => 'stock',
+                'views' => 'views_count',
+                'contacts' => 'contacts_count',
+            ], 'created')
             ->paginate(30)
             ->withQueryString();
 
         return view('pro.products.index', [
             'provider' => $shop,
+            'categories' => PartCategory::orderBy('position')->get(['id', 'name']),
             'products' => $products,
             'stats' => [
                 'total' => $shop->products()->count(),

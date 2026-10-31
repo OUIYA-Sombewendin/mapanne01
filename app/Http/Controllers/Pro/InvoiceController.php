@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Invoice;
 use App\Rules\BurkinaPhone;
 use App\Support\Inventory;
+use App\Support\Listing;
 use App\Support\Phone;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,15 +26,29 @@ class InvoiceController extends Controller
         return view('pro.manage.invoices', [
             'provider' => $provider,
             'kind' => $kind,
-            'invoices' => $provider->invoices()
+            'invoices' => Listing::sort($provider->invoices()
+                ->with('seller:id,name')
                 ->where('kind', $kind)
                 ->when($request->query('status'), fn ($query, $status) => $query->where('status', $status))
+                ->when($request->query('payment'), fn ($query, $m) => $query->where('payment_method', $m))
+                ->when($request->query('seller'), fn ($query, $id) => $query->where('user_id', $id))
+                ->when($request->query('from'), fn ($query, $d) => $query->whereDate('issued_at', '>=', $d))
+                ->when($request->query('to'), fn ($query, $d) => $query->whereDate('issued_at', '<=', $d))
                 ->when($q !== '', fn ($query) => $query->where(fn ($w) => $w
-                    ->where('number', 'ilike', "%$q%")
-                    ->orWhere('customer_name', 'ilike', '%'.str_replace(['%', '_'], ['\%', '\_'], $q).'%')))
-                ->latest('issued_at')->latest('id')
+                    ->where('number', 'ilike', Listing::like($q))
+                    ->orWhere('customer_name', 'ilike', Listing::like($q))
+                    ->orWhere('customer_phone', 'like', '%'.preg_replace('/\D/', '', $q).'%'))), $request, [
+                        'number' => 'number',
+                        'date' => 'issued_at',
+                        'customer' => 'customer_name',
+                        'total' => 'total',
+                        'balance' => fn ($q, $dir) => $q->orderByRaw("(CASE WHEN status = 'cancelled' THEN 0 ELSE total - amount_paid END) {$dir}"),
+                        'status' => 'status',
+                    ], 'date')
                 ->paginate(30)
                 ->withQueryString(),
+            'paymentMethods' => (array) setting('payment_methods'),
+            'sellers' => collect([$provider->user])->concat($provider->members)->filter()->unique('id')->values(),
             'unpaid' => (int) $provider->invoices()->where('kind', 'invoice')->whereIn('status', ['unpaid', 'partial'])->sum(DB::raw('total - amount_paid')),
         ]);
     }

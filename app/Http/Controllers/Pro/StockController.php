@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Pro;
 
 use App\Http\Controllers\Controller;
+use App\Models\PartCategory;
+use App\Models\Product;
 use App\Models\Provider;
 use App\Models\StockMovement;
 use App\Support\Inventory;
+use App\Support\Listing;
 use App\Support\ShopReport;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,20 +23,34 @@ class StockController extends Controller
         $shop = $this->shop($request);
         $q = trim((string) $request->query('q'));
 
-        $products = $shop->products()
+        $products = Listing::sort($shop->products()
             ->with('category:id,name,icon')
             ->when($q !== '', fn ($query) => $query->where(fn ($w) => $w
-                ->where('name', 'ilike', '%'.str_replace(['%', '_'], ['\%', '\_'], $q).'%')
-                ->orWhere('reference', 'ilike', '%'.str_replace(['%', '_'], ['\%', '\_'], $q).'%')))
+                ->where('name', 'ilike', Listing::like($q))
+                ->orWhere('reference', 'ilike', Listing::like($q))
+                ->orWhere('shelf', 'ilike', Listing::like($q))))
             ->when($request->query('filter') === 'low', fn ($query) => $query->where('on_order', false)->whereRaw('stock <= COALESCE(stock_alert, 0)'))
+            ->when($request->query('filter') === 'out', fn ($query) => $query->where('stock', 0))
             ->when($request->query('filter') === 'nocost', fn ($query) => $query->whereNull('cost_price'))
-            ->orderBy('name')
+            ->when($request->query('filter') === 'unpublished', fn ($query) => $query->where('is_active', false))
+            ->when($request->query('category'), fn ($query, $id) => $query->where('part_category_id', $id))
+            ->when($request->query('shelf'), fn ($query, $s) => $query->where('shelf', $s)), $request, [
+                'name' => 'name',
+                'shelf' => 'shelf',
+                'stock' => 'stock',
+                'cost' => 'cost_price',
+                'price' => 'price',
+                'margin' => fn ($q, $dir) => $q->orderByRaw("(price - cost_price) {$dir} NULLS LAST"),
+                'value' => fn ($q, $dir) => $q->orderByRaw("(stock * COALESCE(cost_price, 0)) {$dir}"),
+            ], 'name', 'asc')
             ->paginate(40)
             ->withQueryString();
 
         return view('pro.manage.stock', [
             'provider' => $shop,
             'products' => $products,
+            'categories' => PartCategory::orderBy('position')->get(['id', 'name']),
+            'shelves' => $shop->products()->whereNotNull('shelf')->distinct()->orderBy('shelf')->pluck('shelf'),
             'allProducts' => $shop->products()->orderBy('name')->get(['id', 'name', 'stock', 'cost_price']),
             'value' => ShopReport::stockValue($shop),
             'lowCount' => $shop->products()->where('on_order', false)->whereRaw('stock <= COALESCE(stock_alert, 0)')->count(),
@@ -65,13 +82,20 @@ class StockController extends Controller
 
         return view('pro.manage.movements', [
             'provider' => $shop,
-            'movements' => $shop->stockMovements()
+            'movements' => Listing::sort($shop->stockMovements()
                 ->with(['product:id,name', 'invoice:id,number', 'user:id,name'])
                 ->when($request->query('product'), fn ($q, $id) => $q->where('product_id', $id))
                 ->when($request->query('type'), fn ($q, $type) => $q->where('type', $type))
-                ->latest('id')
+                ->when($request->query('reason'), fn ($q, $r) => $q->where('reason', $r))
+                ->when($request->query('from'), fn ($q, $d) => $q->whereDate('created_at', '>=', $d))
+                ->when($request->query('to'), fn ($q, $d) => $q->whereDate('created_at', '<=', $d)), $request, [
+                    'date' => 'created_at',
+                    'quantity' => 'quantity',
+                    'product' => fn ($q, $dir) => $q->orderBy(Product::select('name')->whereColumn('products.id', 'stock_movements.product_id'), $dir),
+                ], 'date')
                 ->paginate(50)
                 ->withQueryString(),
+            'reasons' => array_merge(...array_values(StockMovement::REASONS)) + StockMovement::SYSTEM_REASONS,
             'products' => $shop->products()->orderBy('name')->get(['id', 'name']),
         ]);
     }

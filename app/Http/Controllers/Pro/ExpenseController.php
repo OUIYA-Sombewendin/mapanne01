@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Pro;
 
 use App\Http\Controllers\Controller;
 use App\Models\Expense;
+use App\Support\Listing;
 use App\Support\ShopReport;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,10 +22,15 @@ class ExpenseController extends Controller
             'provider' => $provider,
             'report' => $report,
             'period' => (string) $request->query('period', 'month'),
-            'expenses' => $provider->expenses()
+            'expenses' => Listing::sort($provider->expenses()
                 ->whereBetween('spent_at', [$report->from->toDateString(), $report->to->toDateString()])
                 ->when($request->query('category'), fn ($q, $c) => $q->where('category', $c))
-                ->latest('spent_at')->latest('id')
+                ->when($request->query('payment'), fn ($q, $m) => $q->where('payment_method', $m))
+                ->when($request->query('q'), fn ($q, $s) => $q->where('description', 'ilike', Listing::like($s))), $request, [
+                    'date' => 'spent_at',
+                    'category' => 'category',
+                    'amount' => 'amount',
+                ], 'date')
                 ->paginate(40)
                 ->withQueryString(),
             'byCategory' => $report->expensesByCategory(),

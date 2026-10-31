@@ -8,6 +8,7 @@ use App\Models\Plan;
 use App\Models\Provider;
 use App\Models\Subscription;
 use App\Notifications\SimpleMessage;
+use App\Support\Listing;
 use App\Support\Notifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -33,7 +34,14 @@ class SubscriptionController extends Controller
         };
 
         return view('admin.subscriptions.index', [
-            'subscriptions' => $query->latest('id')->paginate(30)->withQueryString(),
+            'subscriptions' => Listing::sort($query
+                ->when($request->query('plan'), fn ($q, $id) => $q->where('plan_id', $id))
+                ->when($request->query('payment'), fn ($q, $m) => $q->where('payment_method', $m)), $request, [
+                    'date' => 'created_at',
+                    'start' => 'starts_at',
+                    'end' => 'ends_at',
+                    'amount' => 'amount',
+                ], 'date')->paginate(30)->withQueryString(),
             'status' => $status,
             'counts' => [
                 'pending' => Subscription::where('status', 'pending')->count(),

@@ -7,7 +7,10 @@ use App\Models\ActivityLog;
 use App\Models\PartCategory;
 use App\Models\PartRequest;
 use App\Models\Product;
+use App\Models\Provider;
+use App\Models\ProviderType;
 use App\Notifications\SimpleMessage;
+use App\Support\Listing;
 use App\Support\Notifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,15 +25,30 @@ class MarketplaceController extends Controller
         $q = trim((string) $request->query('q'));
 
         return view('admin.marketplace', [
-            'products' => Product::with(['provider:id,business_name,slug', 'category:id,name', 'photos'])
-                ->when($q !== '', fn ($query) => $query->where('name', 'ilike', '%'.str_replace(['%', '_'], ['\%', '\_'], $q).'%'))
+            'products' => Listing::sort(Product::with(['provider:id,business_name,slug', 'category:id,name', 'photos', 'lock'])
+                ->when($q !== '', fn ($query) => $query->where(fn ($w) => $w->where('name', 'ilike', Listing::like($q))
+                    ->orWhere('reference', 'ilike', Listing::like($q))->orWhere('brand', 'ilike', Listing::like($q))))
                 ->when($request->query('filter') === 'hidden', fn ($query) => $query->where('is_hidden', true))
                 ->when($request->query('filter') === 'pending', fn ($query) => $query->whereNull('approved_at'))
                 ->when($request->query('filter') === 'featured', fn ($query) => $query->where('is_featured', true))
                 ->when($request->query('category'), fn ($query, $id) => $query->where('part_category_id', $id))
-                ->latest()
+                ->when($request->query('shop'), fn ($query, $id) => $query->where('provider_id', $id))
+                ->when($request->query('condition'), fn ($query, $c) => $query->where('condition', $c))
+                ->when($request->query('stock') === 'out', fn ($query) => $query->where('stock', 0)->where('on_order', false))
+                ->when($request->query('stock') === 'in', fn ($query) => $query->where('stock', '>', 0))
+                ->when($request->query('price_min'), fn ($query, $v) => $query->where('price', '>=', (int) $v))
+                ->when($request->query('price_max'), fn ($query, $v) => $query->where('price', '<=', (int) $v)), $request, [
+                    'name' => 'name',
+                    'shop' => fn ($q, $dir) => $q->orderBy(Provider::select('business_name')->whereColumn('providers.id', 'products.provider_id'), $dir),
+                    'price' => 'price',
+                    'stock' => 'stock',
+                    'views' => 'views_count',
+                    'contacts' => 'contacts_count',
+                    'created' => 'created_at',
+                ], 'created')
                 ->paginate(30)
                 ->withQueryString(),
+            'shops' => Provider::whereIn('type', ProviderType::sellingSlugs())->orderBy('business_name')->get(['id', 'business_name']),
             'categories' => PartCategory::withCount('products')->orderBy('position')->get(),
             'pendingCount' => Product::whereNull('approved_at')->count(),
             'requests' => PartRequest::with(['user:id,name', 'city:id,name'])->withCount('offers')->latest()->take(15)->get(),

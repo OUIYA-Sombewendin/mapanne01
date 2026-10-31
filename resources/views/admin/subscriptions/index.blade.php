@@ -9,14 +9,35 @@
 
     <div class="mb-4 flex flex-wrap gap-2">
         @foreach (['pending' => 'À activer', 'active' => 'En cours', 'expiring' => 'Échéance proche', 'expired' => 'Expirés', 'cancelled' => 'Annulés', 'all' => 'Tous'] as $key => $label)
-            <a href="{{ route('admin.subscriptions.index', ['status' => $key]) }}" @class([
+            <a href="{{ route('admin.subscriptions.index', ['status' => $key] + request()->only(['q', 'plan', 'payment', 'sort', 'dir'])) }}" @class([
                 'chip px-3 py-1.5 text-sm',
                 'on-color bg-ink-800 text-white' => $status === $key,
                 'bg-white text-ink-600 ring-1 ring-ink-200' => $status !== $key,
             ])>{{ $label }} @isset($counts[$key]) <span class="opacity-70">{{ $counts[$key] }}</span> @endisset</a>
         @endforeach
-        <form class="ml-auto"><input type="hidden" name="status" value="{{ $status }}"><input name="q" value="{{ request('q') }}" class="input py-1.5" placeholder="Prestataire…"></form>
     </div>
+
+    <x-filter-bar :keys="['q', 'plan', 'payment']" :keep="['status']">
+        <input type="hidden" name="status" value="{{ $status }}">
+        <input type="search" name="q" value="{{ request('q') }}" class="input-sm w-56" placeholder="Prestataire…">
+        <select name="plan" class="input-sm">
+            <option value="">Toutes les offres</option>
+            @foreach ($plans as $plan) <option value="{{ $plan->id }}" @selected(request('plan') == $plan->id)>{{ $plan->name }}</option> @endforeach
+        </select>
+        <select name="payment" class="input-sm">
+            <option value="">Tous les paiements</option>
+            @foreach ($paymentMethods as $m) <option @selected(request('payment') === $m)>{{ $m }}</option> @endforeach
+        </select>
+        <select name="sort" class="input-sm ml-auto" aria-label="Trier">
+            @foreach (['date' => 'Trier : demande', 'start' => 'Trier : début', 'end' => 'Trier : échéance', 'amount' => 'Trier : montant'] as $k => $l)
+                <option value="{{ $k }}" @selected(request('sort', 'date') === $k)>{{ $l }}</option>
+            @endforeach
+        </select>
+        <select name="dir" class="input-sm" aria-label="Ordre">
+            <option value="desc" @selected(request('dir', 'desc') === 'desc')>Décroissant</option>
+            <option value="asc" @selected(request('dir') === 'asc')>Croissant</option>
+        </select>
+    </x-filter-bar>
 
     <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div class="space-y-3">
