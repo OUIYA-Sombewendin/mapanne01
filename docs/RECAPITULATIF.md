@@ -31,10 +31,9 @@ Tout ce que fait le visiteur, et en plus :
 - **demander une pièce introuvable** : les boutiques de sa ville lui font une offre.
 
 ### Prestataire (mécanicien, garage, dépanneur, station, boutique de pièces, et tout type ajouté par l'admin)
-- **Fiche** :
-  - fiche commune : nom, contacts, position, photos, horaires, services, paiements ;
-  - **fiche métier** propre à son activité, enregistrée dans une table dédiée (voir section 4) ;
-  - la fiche n'est publiée qu'**après validation de l'admin**.
+- **Espace pro** : même allure que l'admin (menu latéral, barre du haut avec recherche dans le catalogue, « Nouvelle vente », notifications « À traiter », mode sombre). Le tableau de bord affiche les ventes du mois, le bénéfice, le stock, la note, la disponibilité et les dernières ventes.
+- **Fiche** : **un formulaire propre à chaque métier** (voir section 4), avec ses sections, ses mots et uniquement ses services. Elle n'est publiée qu'**après validation de l'admin**.
+- **Le type d'activité ne se change pas depuis la fiche** : il faut passer par le support (l'admin peut le changer), ou déclarer une nouvelle boutique pour un commerçant.
 - **Catalogue / inventaire** (vendeurs de pièces) :
   - tout le contenu de la boutique, publié ou non sur le marketplace ;
   - prix d'achat, seuil d'alerte, emplacement en rayon ;
@@ -155,7 +154,34 @@ La table `providers` garde le **tronc commun** : nom, contacts, position GPS, va
 | `station_profiles` | enseigne, carburants, 24 h/24, boutique, lavage, gonflage, lubrifiants, mécanicien |
 | `shop_profiles` | véhicules couverts, marques, détail ou gros, occasion, commande sur demande |
 
-Dans **Types de prestataires**, l'admin rattache chaque type à une fiche métier. Par exemple, un nouveau type « Vulcanisateur » peut utiliser la fiche « Mécanicien ». Les formulaires (pro et admin) et l'affichage public sont générés automatiquement.
+Dans **Types de prestataires**, l'admin rattache chaque type à une fiche métier. Par exemple, un nouveau type « Vulcanisateur » peut utiliser la fiche « Mécanicien ».
+
+### Un formulaire par métier
+Chaque métier a son propre formulaire (`resources/views/pro/profile/<métier>.blade.php`), sans lien avec les autres :
+
+| Métier | Sections du formulaire |
+|---|---|
+| Mécanicien | Qui je suis → Mon savoir-faire → Prestations → Zone d'intervention → Paiement → Statut légal |
+| Garage | Le garage → Atelier et équipements → Prestations de l'atelier → Adresse → Entreprise → Paiement |
+| Dépanneur | Service de dépannage → Flotte → Tarifs → Interventions → Base et zone couverte |
+| Station | La station et son enseigne → Carburants → Services sur place → Adresse → Paiement → Entreprise |
+| Boutique | La boutique → Ce que vous vendez → Catalogue et rayons → Adresse → Paiement et livraison → Entreprise |
+
+- Un type sans fiche métier utilise un formulaire général.
+- **Services réservés au métier** : un garage ne voit ni ne peut enregistrer « Super 91 ». Le serveur refuse les services d'un autre métier.
+- Le **formulaire admin** de modification suit aussi le métier. Le changement de métier y est isolé dans une zone d'avertissement : il retire les services de l'ancien métier et il est noté dans l'historique.
+- **Fiche publique par métier** :
+  - station : carburants et services sur place ;
+  - dépanneur : bouton « Appeler le dépanneur », prise en charge, prix au km, zone et flotte ;
+  - garage : places, mécaniciens et équipements ;
+  - mécanicien : se déplace ou non, expérience, spécialités ;
+  - boutique : ce qu'elle vend, avec son catalogue affiché en premier.
+
+### Champs ajoutés par l'admin (Référentiels › Formulaires des métiers)
+- On ajoute des champs à un métier précis ou à tous les métiers. Six types de réponse : texte court, texte long, nombre, oui/non, liste à un choix, cases à cocher.
+- Options : obligatoire, public ou interne (visible seulement par l'équipe), actif, ordre.
+- Les champs apparaissent tout de suite dans la section « Autres informations » du formulaire pro. Les réponses sont visibles dans la fiche admin et, pour les champs publics, sur la fiche publique.
+- Supprimer un champ le retire des formulaires mais conserve les réponses déjà saisies. Chaque modification est notée dans l'historique.
 
 Dans le menu admin, la section **Prestataires** liste chaque type séparément.
 
@@ -203,7 +229,7 @@ Dans le menu admin, la section **Prestataires** liste chaque type séparément.
 
 ## 6. Analyse de la logique
 
-### Règles garanties par les tests (91 tests)
+### Règles garanties par les tests (100 tests)
 - **Visibilité** : un prestataire non validé est invisible partout. Un produit n'est public que si la boutique est visible et que son type peut vendre.
 - **Permissions** :
   - chaque section admin vérifie la permission côté serveur ;
@@ -228,9 +254,9 @@ Dans le menu admin, la section **Prestataires** liste chaque type séparément.
 - **Restauration** : elle remplace aussi les sessions, donc l'admin peut devoir se reconnecter. Elle doit rester rare et se faire en dehors des heures de pointe.
 - **Mise à la une** : celle obtenue par un abonnement Premium est retirée à l'échéance, même si l'admin l'avait aussi activée à la main.
 - **Fiches métier** : si un pro change de type, la fiche métier de son ancien type est conservée mais n'est plus affichée.
+- **Photos** : toutes les images envoyées (fiches, produits, demandes de pièces, logo) sont redressées, réduites et réencodées en WebP. Leurs métadonnées, dont la position GPS, sont supprimées. Les photos envoyées **avant** cette version ne sont pas retraitées.
+- **Recherche** : des index trigrammes (`pg_trgm`) accélèrent la recherche par mots. Si l'hébergeur refuse l'extension, la recherche fonctionne quand même, en plus lent.
 - **Points déjà signalés** :
-  - compression des photos et suppression des données EXIF ;
-  - index `pg_trgm` pour la recherche texte à grande échelle ;
   - avis sans preuve d'intervention ;
   - demandes de pièces diffusées par ville et non par rayon.
 

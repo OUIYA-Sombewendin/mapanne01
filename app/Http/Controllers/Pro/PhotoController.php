@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Pro;
 
 use App\Http\Controllers\Controller;
 use App\Models\ProviderPhoto;
+use App\Support\ImageOptimizer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -25,7 +26,7 @@ class PhotoController extends Controller
         }
 
         foreach ($request->file('photos') as $file) {
-            $provider->photos()->create(['path' => $file->store('photos', 'public')]);
+            $provider->photos()->create(['path' => ImageOptimizer::store($file, 'photos')]);
         }
 
         return back()->with('success', 'Photos ajoutées.');

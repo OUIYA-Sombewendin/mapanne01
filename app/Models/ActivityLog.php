@@ -53,7 +53,7 @@ class ActivityLog extends Model
         'user.admin_role' => 'Rôle d\'administration attribué', 'user.demoted_admin' => 'Droits d\'administration retirés',
         'user.email_verified_by_admin' => 'Email confirmé par l\'admin',
         'user.impersonated' => 'Accès au compte (assistance)', 'user.impersonation_ended' => 'Fin de l\'accès au compte',
-        'provider.shop_added' => 'Nouvelle boutique déclarée', 'shop.member_added' => 'Employé ajouté', 'shop.member_role' => 'Rôle d\'employé modifié', 'shop.member_removed' => 'Employé retiré',
+        'provider.type_changed' => 'Métier d\'un prestataire changé', 'provider.shop_added' => 'Nouvelle boutique déclarée', 'shop.member_added' => 'Employé ajouté', 'shop.member_role' => 'Rôle d\'employé modifié', 'shop.member_removed' => 'Employé retiré',
         'form.field_added' => 'Champ de formulaire ajouté', 'form.field_updated' => 'Champ de formulaire modifié', 'form.field_deleted' => 'Champ de formulaire supprimé',
         'lock.added' => 'Élément verrouillé', 'lock.removed' => 'Élément déverrouillé',
     ];

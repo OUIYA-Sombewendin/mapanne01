@@ -6,8 +6,10 @@ use App\Enums\ProviderStatus;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\City;
+use App\Models\ProfileField;
 use App\Models\Provider;
 use App\Models\ProviderType;
+use App\Models\Service;
 use App\Notifications\ProviderDecision;
 use App\Rules\BurkinaPhone;
 use App\Support\Notifier;
@@ -68,8 +70,14 @@ class ProviderController extends Controller
 
     public function edit(Provider $provider): View
     {
+        $kind = $provider->profileKind();
+
         return view('admin.providers.edit', [
-            'provider' => $provider,
+            'provider' => $provider->load('services'),
+            'kind' => $kind,
+            'copy' => ProviderProfiles::copy($kind),
+            'categories' => ProviderProfiles::serviceCategories($kind),
+            'customFields' => ProfileField::forProvider($provider),
             'types' => ProviderType::options(activeOnly: false),
             'cities' => City::orderBy('name')->with('neighborhoods:id,city_id,name')->get(),
             'paymentMethods' => (array) setting('payment_methods'),
@@ -84,9 +92,17 @@ class ProviderController extends Controller
             'whatsapp' => $request->filled('whatsapp') ? (Phone::normalize($request->input('whatsapp')) ?? $request->input('whatsapp')) : null,
         ]);
 
+        $newType = ProviderType::bySlug((string) $request->input('type'));
+        $kind = $newType?->profileKind();
+        // Services autorisés : ceux du métier (du nouveau métier si l'admin change le type).
+        $allowedServices = Service::whereIn('service_category_id', ProviderProfiles::serviceCategories($kind)->pluck('id'))->pluck('id')->all();
+        $customFields = ProfileField::forProvider($provider);
+
         $data = $request->validate([
             'business_name' => ['required', 'string', 'max:120'],
             'type' => ['required', Rule::exists('provider_types', 'slug')],
+            'services' => ['array'],
+            'services.*' => ['integer'],
             'manager_name' => ['nullable', 'string', 'max:100'],
             'description' => ['nullable', 'string', 'max:2000'],
             'phone' => ['required', new BurkinaPhone],
@@ -101,16 +117,25 @@ class ProviderController extends Controller
             'delivery_details' => ['nullable', 'string', 'max:255'],
             'payment_methods' => ['array'],
             'payment_methods.*' => [Rule::in((array) setting('payment_methods'))],
-        ] + (($kind = ProviderType::bySlug((string) $request->input('type'))?->profileKind()) ? ProviderProfiles::rules($kind) : []));
+        ] + ($kind ? ProviderProfiles::rules($kind) : []) + ProfileField::rulesFor($customFields));
 
-        $provider->fill(collect($data)->except('details')->all() + ['payment_methods' => []]);
+        $typeChanged = $newType && $newType->slug !== $provider->getRawOriginal('type');
+        $provider->fill(collect($data)->except(['details', 'services', 'custom'])->all() + ['payment_methods' => []]);
+        $provider->custom_fields = array_merge((array) $provider->custom_fields, $customFields->mapWithKeys(fn ($f) => [$f->key => $f->cast($request->input('custom.'.$f->key))])->all());
         foreach (['is_formal', 'night_service'] as $flag) {
             $provider->{$flag} = $request->boolean($flag);
         }
         $provider->delivery_available = feature('delivery_enabled') && $request->boolean('delivery_available');
         $provider->is_featured = $request->boolean('is_featured');
         $provider->save();
-        // Fiche métier du type choisi (le formulaire affiche la section correspondant au type sélectionné).
+        // Un changement de métier retire les services de l'ancien métier.
+        $provider->services()->sync(array_values(array_intersect(
+            $request->boolean('services_present') ? array_map('intval', (array) ($data['services'] ?? [])) : $provider->services()->pluck('services.id')->all(),
+            $allowedServices,
+        )));
+        if ($typeChanged) {
+            ActivityLog::record('provider.type_changed', $provider, ['nouveau métier' => $newType->label()]);
+        }
         if ($kind && $request->has('details.'.$kind)) {
             $provider->saveDetails((array) $request->input('details.'.$kind));
         }

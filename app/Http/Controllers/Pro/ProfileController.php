@@ -7,8 +7,8 @@ use App\Models\City;
 use App\Models\ProfileField;
 use App\Models\Provider;
 use App\Models\Service;
-use App\Models\ServiceCategory;
 use App\Rules\BurkinaPhone;
+use App\Support\ImageOptimizer;
 use App\Support\Phone;
 use App\Support\ProviderProfiles;
 use Illuminate\Database\Eloquent\Collection;
@@ -99,7 +99,7 @@ class ProfileController extends Controller
             if ($provider->logo_path) {
                 Storage::disk('public')->delete($provider->logo_path);
             }
-            $provider->logo_path = $request->file('logo')->store('logos', 'public');
+            $provider->logo_path = ImageOptimizer::store($request->file('logo'), 'logos', 512);
         }
 
         $provider->save();
@@ -117,18 +117,8 @@ class ProfileController extends Controller
         return back()->with('success', 'Fiche enregistrée.');
     }
 
-    /** Catégories de services du métier (toutes pour un type sans métier défini). */
     private function categories(?string $kind): Collection
     {
-        $slugs = ProviderProfiles::copy($kind)['services'];
-
-        $categories = ServiceCategory::with(['services' => fn ($q) => $q->active()])
-            ->when($slugs, fn ($q) => $q->whereIn('slug', $slugs))
-            ->orderBy('position')->get();
-
-        // Catégories renommées dans l'admin : on retombe sur la liste complète plutôt qu'un formulaire vide.
-        return $categories->isEmpty() && $slugs
-            ? ServiceCategory::with(['services' => fn ($q) => $q->active()])->orderBy('position')->get()
-            : $categories;
+        return ProviderProfiles::serviceCategories($kind);
     }
 }

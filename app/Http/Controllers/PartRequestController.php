@@ -7,6 +7,7 @@ use App\Models\City;
 use App\Models\PartCategory;
 use App\Models\PartRequest;
 use App\Rules\BurkinaPhone;
+use App\Support\ImageOptimizer;
 use App\Support\Phone;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -66,7 +67,7 @@ class PartRequestController extends Controller
         $partRequest = $user->partRequests()->make(collect($data)->except('photo')->all());
         $partRequest->expires_at = now()->addDays(max(1, (int) setting('part_request_days')));
         if ($request->hasFile('photo')) {
-            $partRequest->photo_path = $request->file('photo')->store('requests', 'public');
+            $partRequest->photo_path = ImageOptimizer::store($request->file('photo'), 'requests', 1280);
         }
         $partRequest->save();
 

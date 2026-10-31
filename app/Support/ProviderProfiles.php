@@ -8,6 +8,8 @@ use App\Models\Profiles\MechanicProfile;
 use App\Models\Profiles\ShopProfile;
 use App\Models\Profiles\StationProfile;
 use App\Models\Profiles\TowTruckProfile;
+use App\Models\ServiceCategory;
+use Illuminate\Database\Eloquent\Collection;
 
 /**
  * Fiches métier : les informations propres à chaque catégorie de prestataire,
@@ -147,6 +149,16 @@ class ProviderProfiles
             'night' => '🌙 J\'interviens la nuit', 'place' => 'Placez votre activité sur la carte.',
             'services' => [], 'details_intro' => '',
         ];
+    }
+
+    /** Catégories de services d'un métier (toutes si le métier n'en définit pas, ou si elles ont été renommées). */
+    public static function serviceCategories(?string $kind): Collection
+    {
+        $slugs = self::copy($kind)['services'];
+        $query = fn () => ServiceCategory::with(['services' => fn ($q) => $q->active()])->orderBy('position');
+        $categories = $query()->when($slugs, fn ($q) => $q->whereIn('slug', $slugs))->get();
+
+        return $categories->isEmpty() && $slugs ? $query()->get() : $categories;
     }
 
     public static function mechanicSpecialties(): array

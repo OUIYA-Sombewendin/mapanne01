@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\ProductPhoto;
 use App\Models\Provider;
 use App\Support\CatalogImporter;
+use App\Support\ImageOptimizer;
 use App\Support\Inventory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -259,7 +260,7 @@ class ProductController extends Controller
         $position = (int) $product->photos()->max('position');
 
         foreach ($request->file('photos', []) as $file) {
-            $product->photos()->create(['path' => $file->store('products', 'public'), 'position' => ++$position]);
+            $product->photos()->create(['path' => ImageOptimizer::store($file, 'products', 1280), 'position' => ++$position]);
         }
     }
 }

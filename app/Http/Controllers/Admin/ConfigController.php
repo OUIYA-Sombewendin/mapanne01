@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Setting;
 use App\Notifications\SimpleMessage;
+use App\Support\ImageOptimizer;
 use App\Support\MailConfigurator;
 use App\Support\SettingsRegistry;
 use Illuminate\Http\RedirectResponse;
@@ -71,7 +72,7 @@ class ConfigController extends Controller
                     $values[$key] = '';
                 } elseif ($request->hasFile($key)) {
                     Storage::disk('public')->delete((string) setting($key));
-                    $values[$key] = $request->file($key)->store('branding', 'public');
+                    $values[$key] = ImageOptimizer::store($request->file($key), 'branding', 512);
                 }
 
                 continue;

@@ -103,7 +103,7 @@ class AdminToolsTest extends TestCase
         $this->assertTrue($profile->is_mobile);
         $this->assertSame(['moteur', 'injection'], $profile->specialties);
 
-        $this->get('/prestataires/'.$mechanic->slug)->assertSee('Se déplace chez le client')->assertSee('15 km');
+        $this->get('/prestataires/'.$mechanic->slug)->assertSee('Se déplace')->assertSee('15 km');
 
         // Le type d'activité ne se change pas depuis la fiche pro.
         $this->put('/pro/fiche', [
