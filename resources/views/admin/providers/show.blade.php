@@ -51,6 +51,7 @@
                         'Livraison' => feature('delivery_enabled') ? ($provider->delivery_available ? 'Oui — '.($provider->delivery_details ?: 'sans précision') : 'Non') : 'Désactivée sur la plateforme',
                         'Paiements' => implode(', ', (array) $provider->payment_methods) ?: '—',
                         'Inscrit le' => $provider->created_at->format('d/m/Y H:i'),
+                    ] + \App\Models\ProfileField::forProvider($provider)->mapWithKeys(fn ($f) => [$f->label.($f->is_public ? '' : ' (interne)') => $f->display($provider->custom_fields[$f->key] ?? null) ?? '—'])->all() + [
                     ] as $label => $value)
                         <div><dt class="text-xs text-ink-400">{{ $label }}</dt><dd class="font-medium">{{ $value }}</dd></div>
                     @endforeach

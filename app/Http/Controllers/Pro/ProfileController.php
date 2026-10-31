@@ -4,37 +4,52 @@ namespace App\Http\Controllers\Pro;
 
 use App\Http\Controllers\Controller;
 use App\Models\City;
+use App\Models\ProfileField;
 use App\Models\Provider;
-use App\Models\ProviderType;
+use App\Models\Service;
 use App\Models\ServiceCategory;
 use App\Rules\BurkinaPhone;
 use App\Support\Phone;
 use App\Support\ProviderProfiles;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
+/**
+ * Fiche du prestataire. Chaque métier a son propre formulaire (resources/views/pro/profile/<métier>.blade.php),
+ * ses propres sections et ses propres services. Le type d'activité n'est pas modifiable ici :
+ * changer de métier passe par le support (ou par une nouvelle boutique pour un commerçant).
+ */
 class ProfileController extends Controller
 {
+    public const VIEWS = ['mechanic', 'garage', 'tow', 'station', 'shop'];
+
     public function edit(Request $request): View
     {
         $provider = $request->user()->provider->load(['services', 'photos']);
+        $kind = $provider->profileKind();
 
-        return view('pro.profile', [
+        return view('pro.profile.'.(in_array($kind, self::VIEWS, true) ? $kind : 'generic'), [
             'provider' => $provider,
-            'types' => ProviderType::options(),
-            'categories' => ServiceCategory::with(['services' => fn ($q) => $q->active()])->orderBy('position')->get(),
+            'copy' => ProviderProfiles::copy($kind),
+            'completion' => $provider->profileCompletion(),
+            'categories' => $this->categories($kind),
             'cities' => City::where('is_active', true)->orderBy('name')->with('neighborhoods:id,city_id,name,latitude,longitude')->get(),
             'selectedServices' => $provider->services->pluck('id')->all(),
             'paymentMethods' => (array) setting('payment_methods'),
+            'productsCount' => $provider->canSellParts() ? $provider->products()->count() : 0,
         ]);
     }
 
     public function update(Request $request): RedirectResponse
     {
         $provider = $request->user()->provider;
+        $kind = $provider->profileKind();
+        $customFields = ProfileField::forProvider($provider);
+        $allowedServices = Service::whereIn('service_category_id', $this->categories($kind)->pluck('id'))->pluck('id')->all();
 
         $request->merge([
             'phone' => Phone::normalize($request->input('phone')) ?? $request->input('phone'),
@@ -43,8 +58,6 @@ class ProfileController extends Controller
 
         $data = $request->validate([
             'business_name' => ['required', 'string', 'max:120'],
-            // Un type désactivé par l'admin reste valable pour les fiches qui l'ont déjà.
-            'type' => ['required', Rule::exists('provider_types', 'slug')->where(fn ($q) => $q->where('is_active', true)->orWhere('slug', $provider->getRawOriginal('type')))],
             'manager_name' => ['nullable', 'string', 'max:100'],
             'description' => ['nullable', 'string', 'max:2000'],
             'phone' => ['required', new BurkinaPhone],
@@ -59,24 +72,28 @@ class ProfileController extends Controller
             'is_formal' => ['boolean'],
             'rccm' => ['nullable', 'required_if:is_formal,1', 'string', 'max:40'],
             'ifu' => ['nullable', 'string', 'max:40'],
+            // Uniquement les services du métier : un garage ne peut pas cocher « Super 91 ».
             'services' => ['array'],
-            'services.*' => ['integer', 'exists:services,id'],
+            'services.*' => ['integer', Rule::in($allowedServices)],
             'logo' => ['nullable', 'image', 'max:'.(int) setting('max_image_kb')],
             'delivery_details' => ['nullable', 'string', 'max:255'],
             'payment_methods' => ['array'],
             'payment_methods.*' => [Rule::in((array) setting('payment_methods'))],
-        ] + ($provider->profileKind() ? ProviderProfiles::rules($provider->profileKind()) : []), [
+        ] + ($kind ? ProviderProfiles::rules($kind) : []) + ProfileField::rulesFor($customFields), [
             'latitude.required' => 'Placez votre établissement sur la carte.',
             'rccm.required_if' => 'Le numéro RCCM est requis pour une entreprise enregistrée.',
+            'services.*.in' => 'Ce service ne correspond pas à votre métier.',
         ]);
 
         // Valeurs avant modification, pour repérer les changements sensibles d'une fiche validée.
         $original = collect(Provider::SENSITIVE_FIELDS)->mapWithKeys(fn ($f) => [$f => $provider->getRawOriginal($f)])->all();
 
-        $provider->fill(collect($data)->except(['services', 'logo', 'details'])->all() + ['payment_methods' => []]);
+        $provider->fill(collect($data)->except(['services', 'logo', 'details', 'custom'])->all() + ['payment_methods' => []]);
         $provider->night_service = $request->boolean('night_service');
         $provider->is_formal = $request->boolean('is_formal');
-        $provider->delivery_available = feature('delivery_enabled') && $request->boolean('delivery_available');
+        $provider->delivery_available = feature('delivery_enabled') && $provider->canSellParts() && $request->boolean('delivery_available');
+        // Champs ajoutés par l'admin : on garde les réponses des champs désactivés ou d'un autre type.
+        $provider->custom_fields = array_merge((array) $provider->custom_fields, $customFields->mapWithKeys(fn ($f) => [$f->key => $f->cast($request->input('custom.'.$f->key))])->all());
 
         if ($request->hasFile('logo')) {
             if ($provider->logo_path) {
@@ -85,12 +102,10 @@ class ProfileController extends Controller
             $provider->logo_path = $request->file('logo')->store('logos', 'public');
         }
 
-        $typeChanged = $provider->isDirty('type');
         $provider->save();
         $provider->services()->sync($data['services'] ?? []);
-        // Fiche métier : si le type vient de changer, le formulaire du nouveau métier s'affichera au prochain passage.
-        if ($request->has('details') && ! $typeChanged) {
-            $provider->saveDetails((array) $request->input('details'));
+        if ($kind && $request->has('details.'.$kind)) {
+            $provider->saveDetails((array) $request->input('details.'.$kind));
         }
 
         if ($provider->flagSensitiveChanges($original)) {
@@ -100,5 +115,20 @@ class ProfileController extends Controller
         }
 
         return back()->with('success', 'Fiche enregistrée.');
+    }
+
+    /** Catégories de services du métier (toutes pour un type sans métier défini). */
+    private function categories(?string $kind): Collection
+    {
+        $slugs = ProviderProfiles::copy($kind)['services'];
+
+        $categories = ServiceCategory::with(['services' => fn ($q) => $q->active()])
+            ->when($slugs, fn ($q) => $q->whereIn('slug', $slugs))
+            ->orderBy('position')->get();
+
+        // Catégories renommées dans l'admin : on retombe sur la liste complète plutôt qu'un formulaire vide.
+        return $categories->isEmpty() && $slugs
+            ? ServiceCategory::with(['services' => fn ($q) => $q->active()])->orderBy('position')->get()
+            : $categories;
     }
 }

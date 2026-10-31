@@ -96,7 +96,7 @@ class AdminToolsTest extends TestCase
         $this->put('/pro/fiche', [
             'business_name' => $mechanic->business_name, 'type' => ProviderType::MECHANIC, 'phone' => $mechanic->phone,
             'city_id' => $city->id, 'latitude' => $mechanic->latitude, 'longitude' => $mechanic->longitude,
-            'details' => ['is_mobile' => '1', 'travel_radius_km' => '15', 'specialties' => ['moteur', 'injection'], 'vehicle_types' => ['moto']],
+            'details' => ['mechanic' => ['is_mobile' => '1', 'travel_radius_km' => '15', 'specialties' => ['moteur', 'injection'], 'vehicle_types' => ['moto']]],
         ])->assertSessionHasNoErrors();
 
         $profile = MechanicProfile::where('provider_id', $mechanic->id)->first();
@@ -105,12 +105,19 @@ class AdminToolsTest extends TestCase
 
         $this->get('/prestataires/'.$mechanic->slug)->assertSee('Se déplace chez le client')->assertSee('15 km');
 
+        // Le type d'activité ne se change pas depuis la fiche pro.
+        $this->put('/pro/fiche', [
+            'business_name' => $mechanic->business_name, 'type' => ProviderType::STATION, 'phone' => $mechanic->phone,
+            'city_id' => $city->id, 'latitude' => $mechanic->latitude, 'longitude' => $mechanic->longitude,
+        ])->assertSessionHasNoErrors();
+        $this->assertSame(ProviderType::MECHANIC, $mechanic->fresh()->type->slug);
+
         // Une valeur hors liste est refusée.
         $this->put('/pro/fiche', [
             'business_name' => $mechanic->business_name, 'type' => ProviderType::MECHANIC, 'phone' => $mechanic->phone,
             'city_id' => $city->id, 'latitude' => $mechanic->latitude, 'longitude' => $mechanic->longitude,
-            'details' => ['specialties' => ['piratage']],
-        ])->assertSessionHasErrors('details.specialties.0');
+            'details' => ['mechanic' => ['specialties' => ['piratage']]],
+        ])->assertSessionHasErrors('details.mechanic.specialties.0');
     }
 
     public function test_delivery_is_disabled_by_default(): void

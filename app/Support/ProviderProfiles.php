@@ -96,6 +96,59 @@ class ProviderProfiles
         ];
     }
 
+    /**
+     * Textes et services propres à chaque métier (null = type sans fiche métier).
+     * services : codes des catégories de services de ce métier.
+     */
+    public static function copy(?string $kind): array
+    {
+        $copy = [
+            'mechanic' => [
+                'name' => 'Nom de l\'atelier', 'name_hint' => 'Ex. Mécanique Ouédraogo & Fils',
+                'about' => 'Votre expérience, les pannes que vous réglez le plus, les marques que vous connaissez…',
+                'logo' => 'Logo ou photo de vous au travail', 'photos' => 'Photos de l\'atelier et de vos réalisations',
+                'night' => '🌙 J\'interviens la nuit', 'place' => 'Placez votre atelier (ou votre point de départ si vous vous déplacez).',
+                'services' => ['reparation', 'pneumatique', 'assistance'], 'details_intro' => 'Ce que les clients regardent avant d\'appeler un mécanicien.',
+            ],
+            'garage' => [
+                'name' => 'Nom du garage', 'name_hint' => 'Ex. Garage Wendkouni',
+                'about' => 'Vos équipements, vos spécialités, les assurances avec qui vous travaillez…',
+                'logo' => 'Logo du garage', 'photos' => 'Photos du garage, de l\'atelier et des équipements',
+                'night' => '🌙 Le garage est ouvert la nuit', 'place' => 'Placez l\'entrée du garage sur la carte.',
+                'services' => ['reparation', 'carrosserie', 'pneumatique', 'assistance'], 'details_intro' => 'Capacité et équipements : ce qui distingue votre garage.',
+            ],
+            'tow' => [
+                'name' => 'Nom du service de dépannage', 'name_hint' => 'Ex. Dépannage Express Faso',
+                'about' => 'Vos véhicules de dépannage, vos délais d\'intervention, votre zone…',
+                'logo' => 'Logo ou photo de la dépanneuse', 'photos' => 'Photos de vos dépanneuses',
+                'night' => '🌙 J\'interviens la nuit', 'place' => 'Placez votre base (point de départ des interventions).',
+                'services' => ['assistance', 'pneumatique'], 'details_intro' => 'Flotte, zone et tarifs : les clients en panne veulent savoir vite.',
+            ],
+            'station' => [
+                'name' => 'Nom de la station', 'name_hint' => 'Ex. Station Oryx Kwamé N\'Krumah',
+                'about' => 'Vos services, l\'accès, ce qui vous distingue…',
+                'logo' => 'Logo de l\'enseigne', 'photos' => 'Photos de la station',
+                'night' => '🌙 La station est ouverte la nuit', 'place' => 'Placez la station sur la carte.',
+                'services' => ['station', 'pneumatique', 'carrosserie'], 'details_intro' => 'Carburants et services disponibles sur place.',
+            ],
+            'shop' => [
+                'name' => 'Nom de la boutique', 'name_hint' => 'Ex. Pièces Auto Faso',
+                'about' => 'Les marques et véhicules que vous couvrez, l\'origine de vos pièces, vos garanties…',
+                'logo' => 'Logo de la boutique', 'photos' => 'Photos de la boutique et des rayons',
+                'night' => '🌙 La boutique est ouverte la nuit', 'place' => 'Placez la boutique sur la carte.',
+                'services' => ['pieces-detachees'], 'details_intro' => 'Ce que vous vendez et comment : détail, gros, occasion, commande.',
+            ],
+        ];
+
+        return $copy[$kind] ?? [
+            'name' => 'Nom de l\'activité', 'name_hint' => '',
+            'about' => 'Votre expérience, vos spécialités…',
+            'logo' => 'Logo', 'photos' => 'Photos de l\'activité',
+            'night' => '🌙 J\'interviens la nuit', 'place' => 'Placez votre activité sur la carte.',
+            'services' => [], 'details_intro' => '',
+        ];
+    }
+
     public static function mechanicSpecialties(): array
     {
         return [
@@ -121,7 +174,7 @@ class ProviderProfiles
     {
         $rules = [];
         foreach (self::kinds()[$kind]['fields'] as $name => $field) {
-            $key = 'details.'.$name;
+            $key = 'details.'.$kind.'.'.$name;
             match ($field['type']) {
                 'bool' => $rules[$key] = ['nullable', 'boolean'],
                 'int' => $rules[$key] = ['nullable', 'integer', 'min:0', 'max:'.($field['max'] ?? 1000000)],

@@ -27,17 +27,17 @@ class ProSpaceTest extends TestCase
     {
         $this->seed(ServiceSeeder::class);
         $city = City::create(['name' => 'Ouagadougou', 'slug' => 'ouagadougou', 'latitude' => 12.37, 'longitude' => -1.52]);
-        $p = Provider::factory()->create();
+        $p = Provider::factory()->create(['type' => 'garage']);
 
         $this->actingAs($p->user)->put('/pro/fiche', [
             'business_name' => 'Garage Renommé',
-            'type' => 'garage',
             'phone' => '71 22 33 44',
             'city_id' => $city->id,
             'latitude' => 12.36,
             'longitude' => -1.51,
             'night_service' => '1',
-            'services' => Service::take(2)->pluck('id')->all(),
+            // Services du métier « garage » (catégorie Réparation).
+            'services' => Service::whereHas('category', fn ($q) => $q->where('slug', 'reparation'))->take(2)->pluck('id')->all(),
         ])->assertSessionHasNoErrors();
 
         $p->refresh();

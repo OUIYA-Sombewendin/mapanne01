@@ -101,7 +101,7 @@ class ProviderController extends Controller
             'delivery_details' => ['nullable', 'string', 'max:255'],
             'payment_methods' => ['array'],
             'payment_methods.*' => [Rule::in((array) setting('payment_methods'))],
-        ] + ($provider->profileKind() ? ProviderProfiles::rules($provider->profileKind()) : []));
+        ] + (($kind = ProviderType::bySlug((string) $request->input('type'))?->profileKind()) ? ProviderProfiles::rules($kind) : []));
 
         $provider->fill(collect($data)->except('details')->all() + ['payment_methods' => []]);
         foreach (['is_formal', 'night_service'] as $flag) {
@@ -109,10 +109,10 @@ class ProviderController extends Controller
         }
         $provider->delivery_available = feature('delivery_enabled') && $request->boolean('delivery_available');
         $provider->is_featured = $request->boolean('is_featured');
-        $typeChanged = $provider->isDirty('type');
         $provider->save();
-        if ($request->has('details') && ! $typeChanged) {
-            $provider->saveDetails((array) $request->input('details'));
+        // Fiche métier du type choisi (le formulaire affiche la section correspondant au type sélectionné).
+        if ($kind && $request->has('details.'.$kind)) {
+            $provider->saveDetails((array) $request->input('details.'.$kind));
         }
 
         ActivityLog::record('provider.edited_by_admin', $provider, ['champs' => array_keys($provider->getChanges())]);

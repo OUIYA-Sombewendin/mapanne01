@@ -265,6 +265,12 @@ Route::middleware('auth')->group(function () {
             Route::post('/types', [Admin\ContentController::class, 'storeType'])->name('types.store');
             Route::put('/types/{type}', [Admin\ContentController::class, 'updateType'])->name('types.update');
 
+            // Formulaires des métiers : champs ajoutés par l'admin aux fiches pro
+            Route::get('/formulaires', [Admin\FormController::class, 'index'])->name('forms.index');
+            Route::post('/formulaires', [Admin\FormController::class, 'store'])->name('forms.store');
+            Route::put('/formulaires/{field}', [Admin\FormController::class, 'update'])->name('forms.update');
+            Route::delete('/formulaires/{field}', [Admin\FormController::class, 'destroy'])->name('forms.destroy');
+
             Route::get('/zones', [Admin\SettingsController::class, 'locations'])->name('locations.index');
             Route::post('/zones/villes', [Admin\SettingsController::class, 'storeCity'])->name('cities.store');
             Route::post('/zones/villes/{city}/statut', [Admin\SettingsController::class, 'toggleCity'])->name('cities.toggle');

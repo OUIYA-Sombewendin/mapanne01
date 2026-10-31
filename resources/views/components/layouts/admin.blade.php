@@ -39,6 +39,7 @@
         ],
         'Référentiels' => [
             ['admin.types.index', [], request()->routeIs('admin.types.*'), 'tag', 'Types de prestataires', null, $me->can('referentials.manage')],
+            ['admin.forms.index', [], request()->routeIs('admin.forms.*'), 'document', 'Formulaires des métiers', null, $me->can('referentials.manage')],
             ['admin.services.index', [], request()->routeIs('admin.services.*'), 'wrench', 'Services', null, $me->can('referentials.manage')],
             ['admin.locations.index', [], request()->routeIs('admin.locations.*'), 'map', 'Villes et quartiers', null, $me->can('referentials.manage')],
             ['admin.pages.index', [], request()->routeIs('admin.pages.*'), 'document', 'Pages de contenu', null, $me->can('content.manage')],

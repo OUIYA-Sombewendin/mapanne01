@@ -68,6 +68,19 @@
                 </section>
             @endif
 
+            {{-- Champs ajoutés par l'administration (Formulaires des métiers), réponses publiques uniquement --}}
+            @php($extra = \App\Models\ProfileField::forProvider($provider)->where('is_public', true)->map(fn ($f) => [$f->label, $f->display($provider->custom_fields[$f->key] ?? null)])->filter(fn ($row) => $row[1] !== null))
+            @if ($extra->isNotEmpty())
+                <section class="card p-4 sm:p-5">
+                    <h2 class="mb-3 font-bold">Informations complémentaires</h2>
+                    <dl class="grid gap-2 text-sm sm:grid-cols-2">
+                        @foreach ($extra as [$label, $value])
+                            <div><dt class="text-ink-500">{{ $label }}</dt><dd class="font-medium">{{ $value }}</dd></div>
+                        @endforeach
+                    </dl>
+                </section>
+            @endif
+
             {{-- Services --}}
             @if ($provider->services->isNotEmpty())
                 <section class="card p-4 sm:p-5">

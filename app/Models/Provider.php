@@ -67,6 +67,7 @@ class Provider extends Model
             'pending_changes' => 'array',
             'delivery_available' => 'boolean',
             'payment_methods' => 'array',
+            'custom_fields' => 'array',
         ];
     }
 
@@ -211,7 +212,13 @@ class Provider extends Model
     /** Fiche métier du type actuel (instance vide non enregistrée si elle n'existe pas encore). */
     public function details(): ?TypeProfile
     {
-        $definition = ProviderProfiles::get($this->profileKind());
+        return $this->detailsFor($this->profileKind());
+    }
+
+    /** Fiche métier d'une catégorie donnée (existante ou vide) : sert aux formulaires qui changent selon le type choisi. */
+    public function detailsFor(?string $kind): ?TypeProfile
+    {
+        $definition = ProviderProfiles::get($kind);
         if (! $definition) {
             return null;
         }
