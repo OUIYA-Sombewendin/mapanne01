@@ -1,0 +1,182 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+@source '../../app/Enums/*.php';
+@source '../../app/Models/*.php';
+
+/*
+ * Identité MaPanne : orange « gilet de dépannage » + bleu nuit, vert pour « ouvert ».
+ * Polices système uniquement : zéro téléchargement, rendu rapide sur réseau lent.
+ */
+@theme {
+    --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+    --color-brand-50: #fff4ec;
+    --color-brand-100: #ffe4d1;
+    --color-brand-200: #ffc49e;
+    --color-brand-300: #ff9d63;
+    --color-brand-400: #ff7a33;
+    --color-brand-500: #f45d0b;
+    --color-brand-600: #d94a04;
+    --color-brand-700: #b33a08;
+    --color-brand-800: #8f300e;
+    --color-brand-900: #74290f;
+
+    --color-ink-50: #f4f6fa;
+    --color-ink-100: #e6eaf2;
+    --color-ink-200: #c9d1e1;
+    --color-ink-300: #9aa7c0;
+    --color-ink-400: #66769a;
+    --color-ink-500: #45557a;
+    --color-ink-600: #334263;
+    --color-ink-700: #263352;
+    --color-ink-800: #18223d;
+    --color-ink-900: #0e1529;
+
+    --color-whatsapp: #1fa855;
+}
+
+@layer base {
+    html {
+        -webkit-tap-highlight-color: transparent;
+    }
+    body {
+        @apply bg-ink-50 text-ink-900 antialiased;
+    }
+    [x-cloak] {
+        display: none !important;
+    }
+}
+
+/* Composants maison (Tailwind v4 : @utility permet de les combiner avec les variantes). */
+@utility btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition active:scale-[.98] disabled:opacity-50;
+}
+@utility btn-primary {
+    @apply bg-brand-500 text-white shadow-sm shadow-brand-500/30 hover:bg-brand-600;
+}
+@utility btn-dark {
+    @apply bg-ink-800 text-white hover:bg-ink-900;
+}
+@utility btn-ghost {
+    @apply border border-ink-200 bg-white text-ink-800 hover:bg-ink-50;
+}
+@utility btn-danger {
+    @apply bg-red-600 text-white hover:bg-red-700;
+}
+@utility btn-whatsapp {
+    @apply bg-whatsapp text-white hover:brightness-95;
+}
+@utility btn-sm {
+    @apply rounded-lg px-3 py-1.5 text-xs;
+}
+@utility card {
+    @apply rounded-2xl bg-white shadow-sm ring-1 ring-ink-100;
+}
+@utility field-label {
+    @apply mb-1 block text-sm font-medium text-ink-700;
+}
+@utility input {
+    @apply block w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-base text-ink-900 placeholder:text-ink-300 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 focus:outline-none sm:text-sm;
+}
+@utility input-error {
+    @apply border-red-400 focus:border-red-400 focus:ring-red-100;
+}
+@utility field-error {
+    @apply mt-1 text-sm text-red-600;
+}
+@utility checkbox {
+    @apply size-5 shrink-0 rounded border-ink-300 accent-brand-500;
+}
+@utility chip {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap;
+}
+@utility chip-filter {
+    @apply cursor-pointer border border-ink-200 bg-white text-ink-700 select-none;
+    &:has(input:checked) {
+        @apply border-brand-500 bg-brand-50 text-brand-700;
+    }
+}
+
+@layer components {
+    .data-table {
+        @apply w-full text-left text-sm;
+    }
+    .data-table th {
+        @apply border-b border-ink-100 px-3 py-2 text-xs font-semibold tracking-wide whitespace-nowrap text-ink-400 uppercase;
+    }
+    .data-table td {
+        @apply border-b border-ink-50 px-3 py-2.5 align-top;
+    }
+
+    /* Marqueurs de carte : emoji dans une pastille, aucun fichier image. */
+    .mp-pin {
+        @apply flex size-9 items-center justify-center rounded-full border-2 border-white bg-brand-500 text-lg shadow-md;
+    }
+    .mp-pin.is-closed {
+        @apply bg-ink-400;
+    }
+    .mp-pin-me {
+        @apply size-4 rounded-full border-[3px] border-white bg-blue-600 shadow-[0_0_0_6px_rgba(37,99,235,.25)];
+    }
+}
+
+/* Pages de contenu rédigées en Markdown depuis l'admin. */
+.prose-mp {
+    @apply space-y-3 leading-relaxed text-ink-700;
+}
+.prose-mp h2 {
+    @apply pt-2 text-lg font-bold text-ink-900;
+}
+.prose-mp h3 {
+    @apply pt-1 font-semibold text-ink-900;
+}
+.prose-mp ul {
+    @apply list-disc space-y-1 pl-5;
+}
+.prose-mp ol {
+    @apply list-decimal space-y-1 pl-5;
+}
+.prose-mp a {
+    @apply text-brand-600 underline;
+}
+
+.leaflet-container {
+    font: inherit;
+    z-index: 0;
+}
+
+/*
+ * Mode sombre de l'administration : les nuances « ink » et le blanc sont inversés,
+ * toutes les vues existantes suivent sans classes supplémentaires.
+ * Les éléments sur fond coloré (.on-color, boutons pleins) gardent un texte blanc.
+ */
+html.admin-dark {
+    color-scheme: dark;
+    --color-white: #131b2e;
+    --color-ink-50: #0b1120;
+    --color-ink-100: #1d2638;
+    --color-ink-200: #2b3650;
+    --color-ink-300: #4a5878;
+    --color-ink-400: #8090b0;
+    --color-ink-500: #a6b2ca;
+    --color-ink-600: #c3cce0;
+    --color-ink-700: #d6dcea;
+    --color-ink-800: #e6eaf2;
+    --color-ink-900: #f4f6fa;
+}
+html.admin-dark :is(.on-color, .btn-primary, .btn-danger, .btn-whatsapp) {
+    --color-white: #ffffff;
+}
+html.admin-dark .on-color.bg-ink-800 {
+    background-color: #2b3a5c;
+}
+
+/* Bandeau du tableau de bord admin : reste sombre dans les deux modes. */
+.admin-hero {
+    --color-white: #ffffff;
+    background: linear-gradient(120deg, var(--hero-from, #3a4a6b), var(--hero-to, #18223d));
+}

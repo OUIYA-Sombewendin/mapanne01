@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "mapanne",
+      "runtimeExecutable": "C:/Users/ouiya/.config/herd/bin/php84/php.exe",
+      "runtimeArgs": [
+        "-S",
+        "127.0.0.1:8010",
+        "-t",
+        "public",
+        "server.php"
+      ],
+      "port": 8010
+    }
+  ]
+}
