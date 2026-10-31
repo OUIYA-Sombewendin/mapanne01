@@ -1,5 +1,6 @@
 <x-layouts.app title="Demander une pièce">
     <div class="mx-auto max-w-xl">
+        <div class="mb-4"><x-back :href="route('products.index')" label="Retour" smart /></div>
         <h1 class="text-2xl font-extrabold">Je ne trouve pas ma pièce</h1>
         <p class="mt-1 mb-5 text-sm text-ink-500">Décrivez-la : les boutiques de votre ville vous envoient leur prix. Gratuit et sans engagement.</p>
 

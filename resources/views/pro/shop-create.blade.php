@@ -1,5 +1,5 @@
 <x-layouts.pro title="Déclarer une boutique">
-    <a href="{{ route('pro.shops.index') }}" class="text-sm text-ink-500">← Mes boutiques</a>
+    <div class="mb-4"><x-back :href="route('pro.shops.index')" label="Mes boutiques" /></div>
     <h1 class="mb-1 text-2xl font-extrabold">Déclarer une nouvelle boutique</h1>
     <p class="mb-5 text-sm text-ink-500">La boutique aura sa propre fiche, son stock et ses ventes. Elle sera visible des clients après vérification par l'équipe {{ setting('site_name') }}.</p>
 

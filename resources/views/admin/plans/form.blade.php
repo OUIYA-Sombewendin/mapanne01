@@ -1,5 +1,5 @@
 <x-layouts.admin :title="$plan->exists ? 'Modifier l\'offre' : 'Nouvelle offre'">
-    <a href="{{ route('admin.plans.index') }}" class="text-sm text-ink-500">← Offres</a>
+    <div class="mb-4"><x-back :href="route('admin.plans.index')" label="Offres" /></div>
     <h1 class="mb-5 text-2xl font-extrabold">{{ $plan->exists ? 'Offre « '.$plan->name.' »' : 'Nouvelle offre' }}</h1>
 
     <form method="POST" action="{{ $plan->exists ? route('admin.plans.update', $plan) : route('admin.plans.store') }}" class="grid gap-5 xl:grid-cols-2">

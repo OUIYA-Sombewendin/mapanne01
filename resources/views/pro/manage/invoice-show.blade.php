@@ -2,7 +2,7 @@
 <x-layouts.pro :title="$invoice->title()">
     <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div>
-            <a href="{{ route('pro.manage.invoices.index', $invoice->isQuote() ? ['kind' => 'quote'] : []) }}" class="text-sm text-ink-500">← {{ $invoice->isQuote() ? 'Devis' : 'Factures' }}</a>
+            <div class="mb-4"><x-back :href="route('pro.manage.invoices.index', $invoice->isQuote() ? ['kind' => 'quote'] : [])" :label="$invoice->isQuote() ? 'Devis' : 'Ventes et factures'" smart /></div>
             <h1 class="text-2xl font-extrabold">{{ $invoice->title() }} <span class="chip align-middle {{ $invoice->statusClass() }}">{{ $invoice->statusLabel() }}</span></h1>
         </div>
         <div class="flex flex-wrap gap-2">

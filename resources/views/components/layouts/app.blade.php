@@ -13,7 +13,8 @@
     @if ($themeCss) <style>{!! $themeCss !!}</style> @endif
 </head>
 <body class="min-h-dvh pb-20 md:pb-0">
-    <header class="sticky top-0 z-30 border-b border-ink-100 bg-white/95 backdrop-blur">
+    {{-- Fond de l'en-tête et du pied de page : réglable dans Admin › Apparence (clair, sombre, couleur principale) --}}
+    <header class="site-bar bar-{{ setting('theme_header_style', 'dark') }} sticky top-0 z-30 border-b border-ink-100 bg-white/95 backdrop-blur">
         <div class="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4">
             <a href="{{ route('home') }}" class="flex items-center gap-2" aria-label="Accueil MaPanne">
                 <x-logo class="size-8" />
@@ -99,7 +100,7 @@
         {{ $slot }}
     </main>
 
-    <footer class="mt-10 border-t border-ink-100 bg-white">
+    <footer class="site-bar bar-{{ setting('theme_footer_style', 'dark') }} mt-10 border-t border-ink-100 bg-white">
         <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-6 text-sm text-ink-400">
             <p>© {{ date('Y') }} {{ setting('site_name') }} · {{ setting('support_email') }}</p>
             <p class="flex flex-wrap gap-4">

@@ -2,7 +2,7 @@
     $kindLabel = \App\Support\ProviderProfiles::get($kind)['label'] ?? null;
 @endphp
 <x-layouts.admin :title="'Modifier '.$provider->business_name">
-    <a href="{{ route('admin.providers.show', $provider) }}" class="text-sm text-ink-500">← Retour à la fiche</a>
+    <div class="mb-4"><x-back :href="route('admin.providers.show', $provider)" label="Retour à la fiche" /></div>
 
     <section class="admin-hero on-color relative mt-2 overflow-hidden rounded-3xl px-6 py-6 text-white shadow-lg sm:px-8">
         <p class="text-sm text-white/70">Modifier la fiche</p>

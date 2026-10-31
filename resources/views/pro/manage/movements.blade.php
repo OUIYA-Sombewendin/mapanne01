@@ -1,4 +1,5 @@
 <x-layouts.pro title="Mouvements de stock">
+<div class="mb-4"><x-back :href="route('pro.manage.stock')" label="Stock" /></div>
     <h1 class="mb-4 text-2xl font-extrabold">Historique du stock</h1>
 
     <form class="mb-3 flex flex-wrap gap-2">
@@ -15,7 +16,6 @@
             <option value="adjust" @selected(request('type') === 'adjust')>Inventaires</option>
         </select>
         <button class="btn btn-dark">Filtrer</button>
-        <a href="{{ route('pro.manage.stock') }}" class="btn btn-ghost">← Stock</a>
     </form>
 
     <div class="card overflow-x-auto">

@@ -1,5 +1,5 @@
 <x-layouts.pro :title="$product->exists ? 'Modifier une pièce' : 'Nouvelle pièce'">
-    <a href="{{ route('pro.products.index') }}" class="text-sm text-ink-500">← Catalogue</a>
+    <div class="mb-4"><x-back :href="route('pro.products.index')" label="Catalogue" smart /></div>
     <h1 class="mt-2 mb-4 text-2xl font-extrabold">{{ $product->exists ? $product->name : 'Nouvelle pièce' }}</h1>
 
     <form method="POST" enctype="multipart/form-data"

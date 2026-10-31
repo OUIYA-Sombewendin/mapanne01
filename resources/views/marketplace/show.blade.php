@@ -8,7 +8,7 @@
         </div>
     @endif
 
-    <a href="{{ route('products.index', ['category' => $product->category->slug]) }}" class="text-sm text-ink-500">← {{ $product->category->icon }} {{ $product->category->name }}</a>
+    <div class="mb-4"><x-back :href="route('products.index', ['category' => $product->category->slug])" label="Retour" smart /></div>
 
     <div class="mt-3 grid gap-5 pb-16 lg:grid-cols-[minmax(0,1fr)_360px] lg:pb-0">
         <div class="space-y-5">

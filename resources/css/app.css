@@ -180,3 +180,68 @@ html.admin-dark .on-color.bg-ink-800 {
     --color-white: #ffffff;
     background: linear-gradient(120deg, var(--hero-from, #3a4a6b), var(--hero-to, #18223d));
 }
+
+/*
+ * En-tête et pied de page du site public : fond choisi dans Admin › Apparence.
+ * bar-light = d'origine ; bar-dark = couleur sombre du thème ; bar-brand = couleur principale.
+ */
+.site-bar:is(.bar-dark, .bar-brand) {
+    --bar-text: #ffffff;
+    --bar-muted: rgb(255 255 255 / 0.72);
+    --bar-hover: rgb(255 255 255 / 0.12);
+    color: var(--bar-text);
+    border-color: transparent;
+    backdrop-filter: none;
+}
+.site-bar.bar-dark {
+    background-color: var(--color-ink-900);
+}
+.site-bar.bar-brand {
+    background-color: var(--color-brand-600);
+}
+.site-bar:is(.bar-dark, .bar-brand) .text-ink-400 {
+    color: var(--bar-muted);
+}
+.site-bar:is(.bar-dark, .bar-brand) > div :is(a, button):not(.btn):not([x-show] *):hover {
+    background-color: var(--bar-hover);
+    color: var(--bar-text);
+}
+.site-bar:is(.bar-dark, .bar-brand) .text-brand-600 {
+    color: var(--color-brand-300);
+}
+.site-bar:is(.bar-dark, .bar-brand) .text-red-600:not([x-show] *) {
+    color: #fecaca;
+}
+.site-bar:is(.bar-dark, .bar-brand) .btn-ghost {
+    background: transparent;
+    color: var(--bar-text);
+    border-color: rgb(255 255 255 / 0.35);
+}
+.site-bar:is(.bar-dark, .bar-brand) .btn-dark {
+    background-color: var(--color-brand-500);
+    color: #ffffff;
+}
+.site-bar.bar-brand .btn-dark {
+    background-color: var(--color-ink-900);
+}
+.site-bar:is(.bar-dark, .bar-brand) .bg-ink-800 {
+    background-color: rgb(255 255 255 / 0.18);
+}
+/* Menus déroulants de l'en-tête : restent clairs et lisibles. */
+.site-bar:is(.bar-dark, .bar-brand) [x-show] {
+    color: var(--color-ink-900);
+}
+.site-bar:is(.bar-dark, .bar-brand) [x-show] :is(a, button):hover {
+    background-color: var(--color-ink-50);
+    color: var(--color-ink-900);
+}
+/* Logo sur fond couleur principale : épingle blanche. */
+.site-bar.bar-brand > div > a:first-child .text-brand-500 {
+    color: #ffffff;
+}
+.site-bar.bar-brand > div > a:first-child svg path:first-child {
+    fill: #ffffff;
+}
+.site-bar.bar-brand > div > a:first-child svg path:last-child {
+    fill: var(--color-brand-600);
+}

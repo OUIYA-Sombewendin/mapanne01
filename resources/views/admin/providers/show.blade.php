@@ -1,5 +1,5 @@
 <x-layouts.admin :title="$provider->business_name">
-    <a href="{{ route('admin.providers.index', ['status' => $provider->status->value]) }}" class="text-sm text-ink-500">← Prestataires</a>
+    <div class="mb-4"><x-back :href="route('admin.providers.index', ['status' => $provider->status->value])" label="Prestataires" smart /></div>
     <div class="mt-2 mb-4 flex flex-wrap items-center gap-3">
         <h1 class="text-2xl font-extrabold">{{ $provider->type->icon() }} {{ $provider->business_name }}</h1>
         <span class="chip {{ $provider->status->color() }}">{{ $provider->status->label() }}</span>

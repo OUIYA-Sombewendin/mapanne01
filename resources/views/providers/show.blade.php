@@ -1,4 +1,5 @@
 <x-layouts.app :title="$provider->business_name" :description="\Illuminate\Support\Str::limit($provider->description, 150)">
+    <div class="mb-4"><x-back :href="route('search')" label="Retour" smart /></div>
     @if ($isPreview)
         <div class="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             <strong>Aperçu privé.</strong> Cette fiche est « {{ $provider->status->label() }} » : elle n'est pas visible par le public.

@@ -11,7 +11,7 @@
                 <h1 class="flex items-center gap-3 text-2xl font-extrabold sm:text-4xl"><x-icon name="shield" class="size-9 sm:size-11" stroke-width="1.5" /> {{ $role->exists ? $role->name : 'Nouveau rôle' }}</h1>
                 <span class="mt-3 block h-1 w-28 rounded-full bg-brand-500"></span>
             </div>
-            <a href="{{ route('admin.roles.index') }}" class="btn shrink-0 border border-white/30 px-5 py-3 text-base text-white hover:bg-white/10">← Retour aux rôles</a>
+            <x-back :href="route('admin.roles.index')" label="Retour aux rôles" dark class="shrink-0 py-2 text-base" />
         </div>
     </section>
 

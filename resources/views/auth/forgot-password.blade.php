@@ -10,6 +10,6 @@
         <p class="mt-4 text-center text-xs text-ink-400">
             Plus accès à votre email ? Contactez le support : {{ setting('support_email') }} · {{ \App\Support\Phone::format(setting('support_phone')) }}
         </p>
-        <p class="mt-2 text-center text-sm"><a href="{{ route('login') }}" class="text-brand-600">← Retour à la connexion</a></p>
+        <p class="mt-4 text-center"><x-back :href="route('login')" label="Retour à la connexion" /></p>
     </div>
 </x-layouts.app>

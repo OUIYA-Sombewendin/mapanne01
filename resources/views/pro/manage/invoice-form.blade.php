@@ -1,5 +1,6 @@
 @php($isQuote = $kind === 'quote')
 <x-layouts.pro :title="$isQuote ? 'Nouveau devis' : 'Nouvelle facture'">
+    <div class="mb-4"><x-back :href="route('pro.manage.invoices.index', $isQuote ? ['kind' => 'quote'] : [])" :label="$isQuote ? 'Devis' : 'Ventes et factures'" smart /></div>
     <h1 class="mb-4 text-2xl font-extrabold">{{ $isQuote ? 'Nouveau devis' : 'Nouvelle vente / facture' }}</h1>
 
     @php($oldLines = old('lines', [['product_id' => '', 'description' => '', 'quantity' => 1, 'unit_price' => '']]))

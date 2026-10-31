@@ -15,7 +15,7 @@
 </head>
 <body class="bg-ink-100 text-ink-900">
     <div class="no-print mx-auto flex max-w-3xl justify-between gap-2 px-4 py-4">
-        <a href="{{ route('pro.manage.invoices.show', $invoice) }}" class="btn btn-ghost btn-sm">← Retour</a>
+        <x-back :href="route('pro.manage.invoices.show', $invoice)" label="Retour" />
         <button onclick="window.print()" class="btn btn-primary btn-sm">🖨 Imprimer ou enregistrer en PDF</button>
     </div>
 

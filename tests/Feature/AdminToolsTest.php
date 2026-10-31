@@ -44,6 +44,11 @@ class AdminToolsTest extends TestCase
 
         Setting::store(['theme_brand_color' => '#16a34a']);
         $this->get('/')->assertSee('--color-brand-500:#16a34a', false);
+
+        // Fond de l'en-tête et du pied de page réglable (sombre par défaut).
+        $this->get('/')->assertSee('site-bar bar-dark', false);
+        Setting::store(['theme_header_style' => 'brand', 'theme_footer_style' => 'light']);
+        $this->get('/')->assertSee('site-bar bar-brand', false)->assertSee('site-bar bar-light', false);
     }
 
     public function test_history_lists_and_exports_actions(): void

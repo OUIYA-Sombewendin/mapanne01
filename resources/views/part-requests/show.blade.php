@@ -1,5 +1,5 @@
 <x-layouts.app :title="$partRequest->title">
-    <a href="{{ route('part-requests.index') }}" class="text-sm text-ink-500">← Mes demandes</a>
+    <div class="mb-4"><x-back :href="route('part-requests.index')" label="Mes demandes" /></div>
 
     <div class="mt-3 grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <section class="space-y-3">

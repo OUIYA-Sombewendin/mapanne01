@@ -34,7 +34,7 @@ class RolesAndPermissionsTest extends TestCase
 
         $this->actingAs($designer)->get('/admin/reglages')->assertOk()->assertSee('Apparence et couleurs')->assertDontSee('Serveur d\'envoi');
         $this->get('/admin/reglages/mail')->assertForbidden();
-        $this->put('/admin/reglages/appearance', ['theme_brand_color' => '#16a34a', 'theme_ink_color' => '#18223d'])->assertSessionHasNoErrors();
+        $this->put('/admin/reglages/appearance', ['theme_brand_color' => '#16a34a', 'theme_ink_color' => '#18223d', 'theme_header_style' => 'dark', 'theme_footer_style' => 'dark'])->assertSessionHasNoErrors();
         $this->assertSame('#16a34a', setting('theme_brand_color'));
         $this->assertNotNull($role);
     }

@@ -1,5 +1,5 @@
 <x-layouts.admin :title="$page->exists ? $page->title : 'Nouvelle page'">
-    <a href="{{ route('admin.pages.index') }}" class="text-sm text-ink-500">← Contenus</a>
+    <div class="mb-4"><x-back :href="route('admin.pages.index')" label="Contenus" /></div>
     <h1 class="mt-2 mb-4 text-2xl font-extrabold">{{ $page->exists ? 'Modifier « '.$page->title.' »' : 'Nouvelle page' }}</h1>
 
     <form method="POST" action="{{ $page->exists ? route('admin.pages.update', $page) : route('admin.pages.store') }}" class="card space-y-4 p-5">
