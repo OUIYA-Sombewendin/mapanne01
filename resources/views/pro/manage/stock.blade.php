@@ -1,8 +1,7 @@
 @php($money = fn ($v) => \App\Support\ShopReport::money($v))
-<x-layouts.app title="Stock">
+<x-layouts.pro title="Stock">
     <h1 class="mb-1 text-2xl font-extrabold">Stock</h1>
     <p class="mb-4 text-sm text-ink-500">Tout ce qui est dans votre boutique, publié ou non sur le marketplace. Chaque entrée et sortie est enregistrée.</p>
-    @include('pro.manage._nav')
 
     <div class="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4">
         <div class="card p-4"><p class="text-xs text-ink-500">Pièces en stock</p><p class="text-2xl font-extrabold">{{ number_format($value['units'], 0, ',', ' ') }}</p></div>
@@ -95,4 +94,4 @@
             <p class="text-xs text-ink-400">Les ventes faites par facture sortent du stock automatiquement.</p>
         </form>
     </div>
-</x-layouts.app>
+</x-layouts.pro>

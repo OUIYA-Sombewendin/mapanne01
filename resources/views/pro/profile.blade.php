@@ -1,6 +1,5 @@
-<x-layouts.app title="Ma fiche">
+<x-layouts.pro title="Ma fiche">
     <h1 class="mb-4 text-2xl font-extrabold">Ma fiche professionnelle</h1>
-    @include('pro._nav')
 
     <form method="POST" action="{{ route('pro.profile.update') }}" enctype="multipart/form-data" class="grid gap-5 lg:grid-cols-2">
         @csrf @method('PUT')
@@ -117,7 +116,7 @@
             </div>
         </section>
 
-        <div class="sticky bottom-20 z-10 lg:col-span-2 md:bottom-4">
+        <div class="sticky bottom-4 z-10 lg:col-span-2">
             <button class="btn btn-primary w-full py-3 shadow-lg md:w-auto">Enregistrer ma fiche</button>
         </div>
     </form>
@@ -147,4 +146,4 @@
             @error('photos.*') <p class="field-error">{{ $message }}</p> @enderror
         @endif
     </section>
-</x-layouts.app>
+</x-layouts.pro>

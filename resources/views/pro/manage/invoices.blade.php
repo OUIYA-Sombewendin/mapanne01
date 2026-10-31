@@ -1,4 +1,4 @@
-<x-layouts.app title="Ventes et factures">
+<x-layouts.pro title="Ventes et factures">
     <div class="mb-1 flex flex-wrap items-center justify-between gap-2">
         <h1 class="text-2xl font-extrabold">Ventes et factures</h1>
         <div class="flex gap-2">
@@ -7,7 +7,6 @@
         </div>
     </div>
     <p class="mb-4 text-sm text-ink-500">Reste à encaisser : <strong @class(['text-red-600' => $unpaid > 0])>{{ number_format($unpaid, 0, ',', ' ') }} FCFA</strong></p>
-    @include('pro.manage._nav')
 
     <div class="mb-3 flex flex-wrap items-center gap-2">
         <div class="flex rounded-xl bg-ink-100 p-1 text-sm font-medium">
@@ -48,4 +47,4 @@
         </table>
     </div>
     <div class="mt-4">{{ $invoices->links() }}</div>
-</x-layouts.app>
+</x-layouts.pro>

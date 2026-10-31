@@ -1,5 +1,5 @@
 @php($f = fn ($v) => number_format($v, 0, ',', ' '))
-<x-layouts.app :title="$invoice->title()">
+<x-layouts.pro :title="$invoice->title()">
     <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div>
             <a href="{{ route('pro.manage.invoices.index', $invoice->isQuote() ? ['kind' => 'quote'] : []) }}" class="text-sm text-ink-500">← {{ $invoice->isQuote() ? 'Devis' : 'Factures' }}</a>
@@ -18,7 +18,6 @@
             @endunless
         </div>
     </div>
-    @include('pro.manage._nav')
 
     <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <section class="card p-5">
@@ -74,4 +73,4 @@
             @endif
         </aside>
     </div>
-</x-layouts.app>
+</x-layouts.pro>

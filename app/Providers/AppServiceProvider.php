@@ -37,7 +37,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         // Couleurs choisies dans Admin › Apparence, injectées dans toutes les mises en page.
-        View::composer(['components.layouts.app', 'components.layouts.admin', 'pro.invoices.print'], function ($view) {
+        View::composer(['components.layouts.app', 'components.layouts.admin', 'components.layouts.pro', 'pro.invoices.print'], function ($view) {
             $view->with('themeCss', Theme::css());
         });
 

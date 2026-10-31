@@ -1,4 +1,4 @@
-<x-layouts.app title="Mes boutiques">
+<x-layouts.pro title="Mes boutiques">
     <div class="mb-1 flex flex-wrap items-center justify-between gap-2">
         <h1 class="text-2xl font-extrabold">Mes boutiques</h1>
         @if ($canAdd)
@@ -7,7 +7,6 @@
     </div>
     <p class="mb-4 text-sm text-ink-500">Chaque boutique a sa propre fiche, son stock, ses ventes et son équipe. Choisissez celle sur laquelle vous travaillez.
         @if ($owned) Vous possédez {{ $owned }} boutique(s) sur {{ $max }} possibles. @endif</p>
-    @include('pro._nav')
 
     <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         @foreach ($shops as $shop)
@@ -38,4 +37,4 @@
     @if (! $canAdd && $owned && feature('multi_shop_enabled'))
         <p class="mt-4 text-sm text-ink-500">Vous ne pouvez pas déclarer de nouvelle boutique : la limite est atteinte, ou votre activité ne vend pas de pièces détachées.</p>
     @endif
-</x-layouts.app>
+</x-layouts.pro>

@@ -1,6 +1,5 @@
-<x-layouts.app title="Mouvements de stock">
+<x-layouts.pro title="Mouvements de stock">
     <h1 class="mb-4 text-2xl font-extrabold">Historique du stock</h1>
-    @include('pro.manage._nav')
 
     <form class="mb-3 flex flex-wrap gap-2">
         <select name="product" class="input max-w-xs">
@@ -41,4 +40,4 @@
         </table>
     </div>
     <div class="mt-4">{{ $movements->links() }}</div>
-</x-layouts.app>
+</x-layouts.pro>

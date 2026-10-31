@@ -1,5 +1,5 @@
 @php($money = fn ($v) => \App\Support\ShopReport::money($v))
-<x-layouts.app title="Gestion">
+<x-layouts.pro title="Gestion">
     <div class="mb-1 flex flex-wrap items-center justify-between gap-2">
         <h1 class="text-2xl font-extrabold">Gestion de {{ $provider->business_name }}</h1>
         <div class="flex gap-2">
@@ -12,7 +12,6 @@
         </div>
     </div>
     <p class="mb-4 text-sm text-ink-500">Votre activité de {{ now()->translatedFormat('F Y') }}. Ces informations sont privées : ni les clients ni les autres pros ne les voient.</p>
-    @include('pro.manage._nav')
 
     <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
         @foreach ([
@@ -82,4 +81,4 @@
             </section>
         @endif
     </div>
-</x-layouts.app>
+</x-layouts.pro>

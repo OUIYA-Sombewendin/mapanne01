@@ -1,4 +1,4 @@
-<x-layouts.app :title="$product->exists ? 'Modifier une pièce' : 'Nouvelle pièce'">
+<x-layouts.pro :title="$product->exists ? 'Modifier une pièce' : 'Nouvelle pièce'">
     <a href="{{ route('pro.products.index') }}" class="text-sm text-ink-500">← Catalogue</a>
     <h1 class="mt-2 mb-4 text-2xl font-extrabold">{{ $product->exists ? $product->name : 'Nouvelle pièce' }}</h1>
 
@@ -113,4 +113,4 @@
             <form id="delete-photo-{{ $photo->id }}" method="POST" action="{{ route('pro.products.photos.destroy', $photo) }}">@csrf @method('DELETE')</form>
         @endforeach
     @endif
-</x-layouts.app>
+</x-layouts.pro>

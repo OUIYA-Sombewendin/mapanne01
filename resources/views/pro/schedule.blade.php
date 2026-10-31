@@ -1,6 +1,5 @@
-<x-layouts.app title="Horaires">
+<x-layouts.pro title="Horaires">
     <h1 class="mb-4 text-2xl font-extrabold">Horaires d'ouverture</h1>
-    @include('pro._nav')
 
     <form method="POST" action="{{ route('pro.schedule.update') }}" class="card max-w-2xl p-5">
         @csrf @method('PUT')
@@ -33,4 +32,4 @@
 
         <button class="btn btn-primary mt-4">Enregistrer les horaires</button>
     </form>
-</x-layouts.app>
+</x-layouts.pro>

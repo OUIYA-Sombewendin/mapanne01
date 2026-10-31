@@ -1,4 +1,4 @@
-<x-layouts.app title="Importer mon catalogue">
+<x-layouts.pro title="Importer mon catalogue">
     <a href="{{ route('pro.products.index') }}" class="text-sm text-ink-500">← Catalogue</a>
     <h1 class="mt-2 mb-1 text-2xl font-extrabold">Importer mon catalogue</h1>
     <p class="mb-5 text-sm text-ink-500">Ajoutez ou mettez à jour des centaines de pièces en une fois. Une pièce qui porte déjà le même nom dans votre catalogue est mise à jour (prix, stock…).</p>
@@ -43,4 +43,4 @@
             </div>
         </section>
     </div>
-</x-layouts.app>
+</x-layouts.pro>

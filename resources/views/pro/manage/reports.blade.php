@@ -1,8 +1,7 @@
 @php($f = fn ($v) => number_format($v, 0, ',', ' '))
 @php($query = request()->only(['period', 'from', 'to']))
-<x-layouts.app title="Rapports">
+<x-layouts.pro title="Rapports">
     <h1 class="mb-4 text-2xl font-extrabold">Rapports</h1>
-    @include('pro.manage._nav')
     @include('pro.manage._period')
 
     <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -68,4 +67,4 @@
         </section>
     </div>
     <p class="mt-4 text-xs text-ink-400">Marge brute = ventes − prix d'achat des pièces vendues. Bénéfice net = marge brute − dépenses. Renseignez le prix d'achat de vos pièces pour des chiffres exacts.</p>
-</x-layouts.app>
+</x-layouts.pro>

@@ -1,7 +1,6 @@
-<x-layouts.app title="Demandes de pièces">
+<x-layouts.pro title="Demandes de pièces">
     <h1 class="mb-1 text-2xl font-extrabold">Demandes de pièces</h1>
     <p class="mb-4 text-sm text-ink-500">Des clients de {{ $provider->city?->name ?? 'votre ville' }} cherchent une pièce. Faites-leur une offre : ils reçoivent votre prix et vous contactent.</p>
-    @include('pro._nav')
 
     <div class="space-y-3">
         @forelse ($requests as $r)
@@ -62,4 +61,4 @@
         @endforelse
     </div>
     <div class="mt-4">{{ $requests->links() }}</div>
-</x-layouts.app>
+</x-layouts.pro>

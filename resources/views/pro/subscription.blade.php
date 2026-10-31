@@ -1,10 +1,9 @@
-<x-layouts.app title="Abonnement">
+<x-layouts.pro title="Abonnement">
     <h1 class="mb-1 text-2xl font-extrabold">Mon abonnement</h1>
     <p class="mb-4 text-sm text-ink-500">
         Offre actuelle : <strong>{{ $currentPlan?->name ?? 'aucune' }}</strong>
         @if ($current?->ends_at) — jusqu'au {{ $current->ends_at->format('d/m/Y') }} ({{ $current->daysLeft() }} jour(s) restant(s)) @endif
     </p>
-    @include('pro._nav')
 
     @if ($pending)
         <div class="mb-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
@@ -65,4 +64,4 @@
             </table>
         </section>
     @endif
-</x-layouts.app>
+</x-layouts.pro>

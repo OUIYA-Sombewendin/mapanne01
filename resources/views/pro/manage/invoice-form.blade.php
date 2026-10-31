@@ -1,7 +1,6 @@
 @php($isQuote = $kind === 'quote')
-<x-layouts.app :title="$isQuote ? 'Nouveau devis' : 'Nouvelle facture'">
+<x-layouts.pro :title="$isQuote ? 'Nouveau devis' : 'Nouvelle facture'">
     <h1 class="mb-4 text-2xl font-extrabold">{{ $isQuote ? 'Nouveau devis' : 'Nouvelle vente / facture' }}</h1>
-    @include('pro.manage._nav')
 
     @php($oldLines = old('lines', [['product_id' => '', 'description' => '', 'quantity' => 1, 'unit_price' => '']]))
     <form method="POST" action="{{ route('pro.manage.invoices.store') }}" class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]"
@@ -105,4 +104,4 @@
             };
         }
     </script>
-</x-layouts.app>
+</x-layouts.pro>

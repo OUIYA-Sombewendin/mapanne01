@@ -1,4 +1,4 @@
-<x-layouts.app title="Catalogue de pièces">
+<x-layouts.pro title="Catalogue de pièces">
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h1 class="text-2xl font-extrabold">Catalogue de pièces</h1>
         <div class="flex gap-2">
@@ -8,7 +8,6 @@
             <a href="{{ route('pro.products.create') }}" class="btn btn-primary">+ Ajouter une pièce</a>
         </div>
     </div>
-    @include('pro._nav')
 
     @unless ($provider->isVisible())
         <div class="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
@@ -85,4 +84,4 @@
         @endforelse
     </div>
     <div class="mt-4">{{ $products->links() }}</div>
-</x-layouts.app>
+</x-layouts.pro>

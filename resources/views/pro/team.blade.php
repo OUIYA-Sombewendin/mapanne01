@@ -1,7 +1,6 @@
-<x-layouts.app title="Équipe">
+<x-layouts.pro title="Équipe">
     <h1 class="mb-1 text-2xl font-extrabold">Équipe de {{ $provider->business_name }}</h1>
     <p class="mb-4 text-sm text-ink-500">Ajoutez vos employés : chacun a son propre compte et ne voit que ce que son rôle permet. Vous restez le seul propriétaire.</p>
-    @include('pro._nav')
 
     <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div class="space-y-5">
@@ -74,4 +73,4 @@
             <button class="btn btn-primary w-full">Ajouter à l'équipe</button>
         </form>
     </div>
-</x-layouts.app>
+</x-layouts.pro>

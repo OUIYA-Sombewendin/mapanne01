@@ -1,7 +1,6 @@
 @php($f = fn ($v) => number_format($v, 0, ',', ' '))
-<x-layouts.app title="Dépenses">
+<x-layouts.pro title="Dépenses">
     <h1 class="mb-4 text-2xl font-extrabold">Dépenses</h1>
-    @include('pro.manage._nav')
     @include('pro.manage._period')
 
     <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
@@ -70,4 +69,4 @@
             <p class="text-xs text-ink-400">Les achats de pièces se saisissent dans Stock › Entrée : ils comptent comme coût au moment de la vente.</p>
         </form>
     </div>
-</x-layouts.app>
+</x-layouts.pro>

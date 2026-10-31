@@ -1,4 +1,4 @@
-<x-layouts.app title="Déclarer une boutique">
+<x-layouts.pro title="Déclarer une boutique">
     <a href="{{ route('pro.shops.index') }}" class="text-sm text-ink-500">← Mes boutiques</a>
     <h1 class="mb-1 text-2xl font-extrabold">Déclarer une nouvelle boutique</h1>
     <p class="mb-5 text-sm text-ink-500">La boutique aura sa propre fiche, son stock et ses ventes. Elle sera visible des clients après vérification par l'équipe {{ setting('site_name') }}.</p>
@@ -19,4 +19,4 @@
         <button class="btn btn-primary">Déclarer la boutique</button>
         <p class="text-xs text-ink-400">Vous pourrez ensuite placer la boutique sur la carte, ajouter photos et horaires depuis sa fiche.</p>
     </form>
-</x-layouts.app>
+</x-layouts.pro>
