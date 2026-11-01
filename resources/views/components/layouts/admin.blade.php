@@ -9,6 +9,7 @@
         'reviews' => \App\Models\Review::where('is_pending', true)->count(),
         'products' => \App\Models\Product::whereNull('approved_at')->count(),
         'subscriptions' => \App\Models\Subscription::where('status', 'pending')->count(),
+        'assist' => \App\Models\AssistRequest::active()->count(),
     ]);
     $typeParam = request()->routeIs('admin.providers.*') ? request('type') : null;
 
@@ -19,7 +20,10 @@
             ['admin.history.index', [], request()->routeIs('admin.history.*'), 'history', 'Historique', null, $me->can('history.view')],
         ],
         'Prestataires' => array_merge(
-            [['admin.providers.index', [], request()->routeIs('admin.providers.*') && ! $typeParam, 'providers', 'Inscriptions et fiches', $todo['providers'] + $todo['review'], $me->can('providers.view')]],
+            [
+                ['admin.providers.index', [], request()->routeIs('admin.providers.*') && ! $typeParam, 'providers', 'Inscriptions et fiches', $todo['providers'] + $todo['review'], $me->can('providers.view')],
+                ['admin.assist.index', [], request()->routeIs('admin.assist.*'), 'phone', 'Dépannages en direct', $todo['assist'] ?: null, $me->can('providers.view') && feature('assist_enabled')],
+            ],
             \App\Models\ProviderType::cached()->where('is_active', true)->values()->map(fn ($t) => [
                 'admin.trades.show', ['type' => $t->slug], (request()->routeIs('admin.trades.*') && request()->route('type')?->slug === $t->slug) || $typeParam === $t->slug, 'emoji:'.$t->icon(), $t->shortLabel(), null, $me->can('providers.view'),
             ])->all(),
@@ -71,6 +75,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @if (\App\Support\Channels::pushReady()) <meta name="vapid-key" content="{{ config('webpush.vapid.public_key') }}"> @endif
     <meta name="robots" content="noindex">
     <title>{{ $title ? $title.' · ' : '' }}Admin {{ setting('site_name') }}</title>
     <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">

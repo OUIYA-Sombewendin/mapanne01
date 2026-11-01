@@ -6,7 +6,7 @@ namespace App\Support;
  * Modules activables pour chaque métier (Référentiels › espace du métier).
  * Un module retiré disparaît de l'espace pro de tous les prestataires du métier.
  * La fiche, les horaires, les photos et les avis sont toujours disponibles.
- * Les clés catalog…shops sont aussi des zones de l'espace pro (voir App\Support\ShopTeam).
+ * Les clés assist…shops sont aussi des zones de l'espace pro (voir App\Support\ShopTeam).
  */
 class TradeModules
 {
@@ -15,6 +15,7 @@ class TradeModules
     {
         return [
             'services' => ['label' => 'Services proposés', 'help' => 'Le prestataire coche ses services ; il apparaît quand un client les cherche.', 'icon' => 'wrench'],
+            'assist' => ['label' => 'Dépannage en direct', 'help' => 'Recevoir les demandes des conducteurs en panne à proximité et y répondre.', 'icon' => 'phone'],
             'catalog' => ['label' => 'Catalogue de pièces', 'help' => 'Vente de pièces sur le marketplace.', 'icon' => 'cube'],
             'requests' => ['label' => 'Demandes de pièces', 'help' => 'Répondre aux pièces recherchées par les clients.', 'icon' => 'flag', 'requires' => ['catalog']],
             'stock' => ['label' => 'Stock et inventaire', 'help' => 'Entrées, sorties, alertes de réapprovisionnement.', 'icon' => 'layers', 'requires' => ['catalog']],
@@ -41,9 +42,9 @@ class TradeModules
     {
         return match ($kind) {
             'shop' => ['services', 'catalog', 'requests', 'stock', 'invoices', 'expenses', 'reports', 'team', 'shops'],
-            'garage' => ['services', 'invoices', 'expenses', 'reports', 'team'],
+            'garage' => ['services', 'assist', 'invoices', 'expenses', 'reports', 'team'],
             'station' => ['services', 'invoices', 'expenses', 'reports', 'team', 'shops'],
-            'mechanic', 'tow' => ['services', 'invoices', 'expenses', 'reports'],
+            'mechanic', 'tow' => ['services', 'assist', 'invoices', 'expenses', 'reports'],
             default => ['services'],
         };
     }

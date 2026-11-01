@@ -263,5 +263,119 @@ Alpine.data('autoFilter', (extra = {}) => ({
     },
 }));
 
+/* Dépannage en direct : position GPS du conducteur (ou ville et quartier à défaut). */
+Alpine.data('assistForm', (old) => ({
+    vehicle: old.vehicle || 'moto',
+    energy: old.energy || 'thermique',
+    problem: old.problem || '',
+    lat: old.lat || '',
+    lng: old.lng || '',
+    locating: false,
+    error: '',
+    init() {
+        if (!this.lat) this.locate();
+    },
+    async locate() {
+        this.locating = true;
+        this.error = '';
+        try {
+            const { lat, lng } = await locate();
+            this.lat = lat.toFixed(6);
+            this.lng = lng.toFixed(6);
+        } catch (e) {
+            this.error = e.message;
+        }
+        this.locating = false;
+    },
+}));
+
+/* Suivi d'une demande de dépannage : l'état est rafraîchi toutes les 10 secondes. */
+Alpine.data('assistTracker', (url, state) => ({
+    state,
+    init() {
+        if (!this.state.active) return;
+        const timer = setInterval(async () => {
+            try {
+                const next = await (await fetch(url, { headers: { Accept: 'application/json' } })).json();
+                if (next.status !== this.state.status) {
+                    clearInterval(timer);
+                    window.location.reload();
+                }
+            } catch (e) {
+                /* réseau coupé : on réessaie au tour suivant */
+            }
+        }, 10000);
+    },
+}));
+
+/* Espace pro : recharge la page des dépannages quand une nouvelle demande arrive. */
+Alpine.data('assistWatcher', (url, count) => ({
+    init() {
+        setInterval(async () => {
+            try {
+                const { open } = await (await fetch(url, { headers: { Accept: 'application/json' } })).json();
+                if (open !== count) window.location.reload();
+            } catch (e) {
+                /* réseau coupé */
+            }
+        }, 20000);
+    },
+}));
+
+/* Notifications push : abonnement de cet appareil (clé VAPID publique dans <meta name="vapid-key">). */
+const urlBase64ToUint8Array = (base64) => {
+    const padded = (base64 + '='.repeat((4 - (base64.length % 4)) % 4)).replace(/-/g, '+').replace(/_/g, '/');
+    return Uint8Array.from(atob(padded), (c) => c.charCodeAt(0));
+};
+
+Alpine.data('pushToggle', () => ({
+    supported: 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window,
+    enabled: false,
+    busy: false,
+    error: '',
+    async init() {
+        if (!this.supported) return;
+        const reg = await navigator.serviceWorker.getRegistration('/sw.js');
+        this.enabled = Boolean(reg && (await reg.pushManager.getSubscription()) && Notification.permission === 'granted');
+    },
+    csrf() {
+        return document.querySelector('meta[name=csrf-token]').content;
+    },
+    async toggle() {
+        this.busy = true;
+        this.error = '';
+        try {
+            const reg = await navigator.serviceWorker.register('/sw.js');
+            await navigator.serviceWorker.ready;
+            let sub = await reg.pushManager.getSubscription();
+            if (this.enabled && sub) {
+                await fetch('/notifications/push', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': this.csrf(), Accept: 'application/json' },
+                    body: JSON.stringify({ endpoint: sub.endpoint }),
+                });
+                await sub.unsubscribe();
+                this.enabled = false;
+            } else {
+                if ((await Notification.requestPermission()) !== 'granted') {
+                    throw new Error('Autorisez les notifications dans votre navigateur.');
+                }
+                const key = document.querySelector('meta[name=vapid-key]').content;
+                sub = sub || (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(key) }));
+                const res = await fetch('/notifications/push', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': this.csrf(), Accept: 'application/json' },
+                    body: JSON.stringify({ ...sub.toJSON(), contentEncoding: (PushManager.supportedContentEncodings || ['aes128gcm'])[0] }),
+                });
+                if (!res.ok) throw new Error('Activation impossible pour le moment.');
+                this.enabled = true;
+            }
+        } catch (e) {
+            this.error = e.message;
+        }
+        this.busy = false;
+    },
+}));
+
 window.Alpine = Alpine;
 Alpine.start();

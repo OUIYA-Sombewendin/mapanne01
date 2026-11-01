@@ -13,6 +13,14 @@
                 <h1 class="text-4xl leading-[1.05] font-extrabold tracking-tight md:text-6xl">{{ setting('home_title') }}<br><span class="text-brand-400">{{ setting('home_highlight') }}</span></h1>
                 <p class="mt-4 max-w-xl text-ink-200 md:text-lg">{{ setting('home_subtitle') }}</p>
 
+                @if (feature('assist_enabled'))
+                    <a href="{{ route('assist.create') }}" class="mt-6 flex max-w-xl items-center gap-4 rounded-2xl bg-red-600 px-5 py-4 shadow-xl shadow-red-900/30 transition hover:bg-red-500">
+                        <span class="text-3xl">🆘</span>
+                        <span class="flex-1"><span class="block text-lg font-extrabold">Je suis en panne</span><span class="block text-sm text-white/85">Envoyez votre position : les pros les plus proches sont prévenus.</span></span>
+                        <span class="text-2xl">→</span>
+                    </a>
+                @endif
+
                 <form action="{{ route('search') }}" method="GET" class="mt-6 max-w-xl rounded-2xl bg-white p-3 text-ink-900 shadow-2xl shadow-black/30" x-data="geoSearch">
                     <input type="hidden" name="lat"><input type="hidden" name="lng">
                     <button type="button" @click="locate()" :disabled="loading" class="btn btn-primary w-full py-3.5 text-base">

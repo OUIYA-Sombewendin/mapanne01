@@ -101,9 +101,18 @@ class SettingsRegistry
                 ],
             ],
             'notifications' => [
-                'label' => 'Notifications email',
+                'label' => 'Notifications',
                 'icon' => '✉️',
                 'settings' => [
+                    'push_enabled' => ['type' => 'bool', 'label' => 'Notifications push (navigateur et téléphone, gratuites)', 'default' => true, 'help' => 'Nécessite les clés VAPID dans .env (php artisan webpush:vapid) et un site en HTTPS en production.'],
+                    'sms_enabled' => ['type' => 'bool', 'label' => 'Envoyer aussi des SMS (payant)', 'default' => false],
+                    'sms_driver' => ['type' => 'select', 'label' => 'Fournisseur SMS', 'default' => 'orange', 'options' => ['orange' => 'Orange SMS API', 'log' => 'Journal uniquement (test)']],
+                    'sms_client_id' => ['type' => 'string', 'label' => 'SMS : identifiant client (Client ID)', 'default' => ''],
+                    'sms_client_secret' => ['type' => 'secret', 'label' => 'SMS : clé secrète (Client secret)', 'default' => ''],
+                    'sms_sender' => ['type' => 'string', 'label' => 'SMS : numéro expéditeur', 'default' => '', 'help' => 'Numéro fourni par l\'opérateur avec le contrat SMS.'],
+                    'whatsapp_enabled' => ['type' => 'bool', 'label' => 'Envoyer aussi des messages WhatsApp (payant)', 'default' => false, 'help' => 'API WhatsApp Business de Meta. Les messages hors conversation en cours exigent des modèles validés par Meta.'],
+                    'whatsapp_phone_id' => ['type' => 'string', 'label' => 'WhatsApp : identifiant du numéro (Phone number ID)', 'default' => ''],
+                    'whatsapp_token' => ['type' => 'secret', 'label' => 'WhatsApp : jeton d\'accès', 'default' => ''],
                     'admin_notification_email' => ['type' => 'email', 'label' => 'Email qui reçoit les alertes admin', 'default' => ''],
                     'notify_admin_new_provider' => ['type' => 'bool', 'label' => 'Alerter l\'admin à chaque nouvelle inscription pro', 'default' => true],
                     'notify_admin_new_report' => ['type' => 'bool', 'label' => 'Alerter l\'admin à chaque signalement', 'default' => true],
@@ -205,6 +214,17 @@ class SettingsRegistry
                     'employee_email_verification' => ['type' => 'bool', 'label' => 'Les employés de boutique doivent confirmer leur email avant d\'accéder à la boutique', 'default' => true],
                 ],
             ],
+            'assist' => [
+                'label' => 'Dépannage en direct',
+                'icon' => '🆘',
+                'settings' => [
+                    'assist_enabled' => ['type' => 'bool', 'label' => 'Dépannage en direct (le conducteur envoie sa position, les pros proches sont prévenus)', 'default' => true],
+                    'assist_guests_allowed' => ['type' => 'bool', 'label' => 'Demande possible sans compte (nom et téléphone suffisent)', 'default' => true],
+                    'assist_radius_km' => ['type' => 'int', 'label' => 'Rayon de recherche des prestataires (km)', 'default' => 10],
+                    'assist_max_providers' => ['type' => 'int', 'label' => 'Nombre maximum de prestataires prévenus par demande', 'default' => 15],
+                    'assist_expire_minutes' => ['type' => 'int', 'label' => 'Délai avant qu\'une demande sans réponse soit fermée (minutes)', 'default' => 45],
+                ],
+            ],
             'emergency' => [
                 'label' => 'Urgence',
                 'icon' => '🚨',
@@ -223,7 +243,6 @@ class SettingsRegistry
     public static function upcomingModules(): array
     {
         return [
-            ['SOS en temps réel', 'Alerte envoyée aux dépanneurs proches, acceptation, suivi de l\'intervention.'],
             ['Paiement mobile en ligne', 'Orange Money, Moov Money : paiement automatique des abonnements (aujourd\'hui activés à la main par l\'admin).'],
             ['Codes SMS (OTP)', 'Vérification du téléphone et récupération de compte par SMS.'],
             ['Prix des carburants', 'Prix et disponibilité par station, mis à jour par les stations.'],

@@ -5,6 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @if (\App\Support\Channels::pushReady()) <meta name="vapid-key" content="{{ config('webpush.vapid.public_key') }}"> @endif
     <meta name="theme-color" content="{{ \App\Support\Theme::brand() }}">
     <title>{{ $title ? $title.' · '.setting('site_name') : setting('site_name').' — '.setting('site_tagline') }}</title>
     <meta name="description" content="{{ $description ?? 'Trouvez vite un mécanicien, un garage, un dépanneur ou une station-service vérifiés près de vous au Burkina Faso.' }}">

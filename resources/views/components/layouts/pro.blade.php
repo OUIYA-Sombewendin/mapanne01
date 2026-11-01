@@ -6,6 +6,10 @@
     $shops = $me->shops();
     $sells = $provider->canSellParts();
     $managing = feature('shop_management_enabled');
+    // Demandes de dépannage en attente pour cette boutique (non mis en cache : c'est urgent).
+    $assistOpen = feature('assist_enabled') && $me->canShop('assist')
+        ? \App\Models\AssistRequest::where('status', 'open')->whereHas('notifiedProviders', fn ($q) => $q->whereKey($provider->id)->whereNull('assist_dispatches.declined_at'))->count()
+        : null;
 
     // Points d'attention de la boutique active (mis en cache 60 s).
     $alerts = cache()->remember("pro.alerts.{$provider->id}.{$myRole}", 60, function () use ($me, $provider, $sells) {
@@ -43,6 +47,7 @@
     $sections = [
         'Ma boutique' => [
             ['pro.dashboard', 'dashboard', 'Tableau de bord', $is('pro.dashboard'), true],
+            ['pro.assist.index', 'phone', 'Dépannages', $is('pro.assist.*'), $assistOpen !== null, $assistOpen ?: null],
             ['pro.profile', 'document', 'Fiche', $is('pro.profile'), $me->canShop('profile')],
             ['pro.schedule', 'clock', 'Horaires', $is('pro.schedule'), $me->canShop('profile')],
         ],
@@ -65,7 +70,7 @@
     ];
     $sections = array_filter(array_map(fn ($links) => array_values(array_filter($links, fn ($l) => $l[4])), $sections));
     // Format commun du menu latéral : [url, actif, icône, libellé, compteur]
-    $navSections = array_map(fn ($links) => array_map(fn ($l) => [route($l[0]), $l[3], $l[1], $l[2], null], $links), $sections);
+    $navSections = array_map(fn ($links) => array_map(fn ($l) => [route($l[0]), $l[3], $l[1], $l[2], $l[5] ?? null], $links), $sections);
     $impersonating = session()->has(\App\Http\Controllers\Admin\ImpersonationController::SESSION_KEY);
 @endphp
 <!DOCTYPE html>
@@ -74,6 +79,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @if (\App\Support\Channels::pushReady()) <meta name="vapid-key" content="{{ config('webpush.vapid.public_key') }}"> @endif
     <meta name="robots" content="noindex">
     <title>{{ $title ? $title.' · ' : '' }}{{ $provider->business_name }} · {{ setting('site_name') }} Pro</title>
     <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">

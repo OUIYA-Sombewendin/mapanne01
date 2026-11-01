@@ -16,13 +16,14 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
 use Laravel\Sanctum\HasApiTokens;
+use NotificationChannels\WebPush\HasPushSubscriptions;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
 
-    use Lockable;
+    use HasPushSubscriptions, Lockable;
 
     /**
      * Le rôle et le statut actif ne sont jamais assignables en masse :
@@ -148,6 +149,17 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $this->shopsMemo = null;
         $this->unsetRelation('providers')->unsetRelation('memberships')->unsetRelation('provider');
+    }
+
+    /** Numéro pour les SMS et WhatsApp (canaux désactivés par défaut, voir App\Support\Channels). */
+    public function routeNotificationForSms(): ?string
+    {
+        return $this->phone;
+    }
+
+    public function routeNotificationForWhatsapp(): ?string
+    {
+        return $this->phone;
     }
 
     public function vehicles(): HasMany

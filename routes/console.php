@@ -60,5 +60,10 @@ Artisan::command('mapanne:backup {--force : Sauvegarder même si l\'option autom
     $this->info("Sauvegarde créée : $name");
 })->purpose('Crée une sauvegarde complète (base + fichiers)');
 
+Artisan::command('mapanne:assist-expire', function () {
+    $this->info(\App\Support\AssistDispatch::expireStale().' demande(s) de dépannage fermée(s) sans réponse.');
+})->purpose('Ferme les demandes de dépannage restées sans réponse');
+
 Schedule::command('mapanne:subscriptions')->dailyAt('06:00');
+Schedule::command('mapanne:assist-expire')->everyFiveMinutes();
 Schedule::command('mapanne:backup')->dailyAt('02:00');

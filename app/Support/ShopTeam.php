@@ -18,6 +18,7 @@ class ShopTeam
     public const AREAS = [
         'dashboard' => 'Tableau de bord',
         'availability' => 'Disponibilité',
+        'assist' => 'Dépannage en direct',
         'profile' => 'Fiche, horaires, photos',
         'catalog' => 'Catalogue',
         'stock' => 'Stock',
@@ -31,7 +32,7 @@ class ShopTeam
     ];
 
     private const ACCESS = [
-        'manager' => ['dashboard', 'availability', 'profile', 'catalog', 'stock', 'invoices', 'expenses', 'reports', 'requests'],
+        'manager' => ['dashboard', 'availability', 'assist', 'profile', 'catalog', 'stock', 'invoices', 'expenses', 'reports', 'requests'],
         'seller' => ['dashboard', 'availability', 'catalog', 'stock', 'invoices', 'requests'],
         'cashier' => ['dashboard', 'invoices'],
     ];

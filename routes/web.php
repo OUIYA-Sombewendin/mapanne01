@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Account;
 use App\Http\Controllers\Admin;
+use App\Http\Controllers\AssistController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\RegisterController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\PageController;
 use App\Http\Controllers\PartRequestController;
 use App\Http\Controllers\Pro;
 use App\Http\Controllers\ProviderController;
+use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SearchController;
@@ -23,6 +25,15 @@ Route::get('/', HomeController::class)->name('home');
 Route::get('/recherche', SearchController::class)->name('search');
 Route::get('/prestataires/{provider}', [ProviderController::class, 'show'])->name('providers.show');
 Route::view('/urgence', 'pages.emergency')->name('emergency');
+
+// Dépannage en direct : le conducteur envoie sa position, les pros proches sont prévenus.
+Route::middleware('feature:assist_enabled')->group(function () {
+    Route::get('/depannage', [AssistController::class, 'create'])->name('assist.create');
+    Route::post('/depannage', [AssistController::class, 'store'])->middleware('throttle:5,10')->name('assist.store');
+    Route::get('/depannage/{assist}', [AssistController::class, 'show'])->name('assist.show');
+    Route::get('/depannage/{assist}/etat', [AssistController::class, 'status'])->middleware('throttle:60,1')->name('assist.status');
+    Route::post('/depannage/{assist}/annuler', [AssistController::class, 'cancel'])->name('assist.cancel');
+});
 Route::get('/pages/{page}', [PageController::class, 'show'])->name('pages.show');
 
 // Marketplace de pièces détachées (désactivable dans l'admin)
@@ -64,6 +75,10 @@ Route::middleware('auth')->group(function () {
     Route::put('/mon-compte', [Account\AccountController::class, 'update'])->middleware('not-impersonating')->name('account.update');
     Route::put('/mon-compte/mot-de-passe', [Account\AccountController::class, 'updatePassword'])->middleware('not-impersonating')->name('account.password');
 
+    // Notifications push de cet appareil
+    Route::post('/notifications/push', [PushSubscriptionController::class, 'store'])->middleware('throttle:20,1')->name('push.store');
+    Route::delete('/notifications/push', [PushSubscriptionController::class, 'destroy'])->name('push.destroy');
+
     // Fin de l'accès d'un admin au compte d'un utilisateur (bandeau « Revenir à mon compte »).
     Route::post('/acces/quitter', [Admin\ImpersonationController::class, 'stop'])->name('impersonation.stop');
 
@@ -94,6 +109,14 @@ Route::middleware('auth')->group(function () {
         Route::middleware(['role:provider', 'shop'])->prefix('pro')->name('pro.')->group(function () {
             Route::get('/', [Pro\DashboardController::class, 'index'])->name('dashboard');
             Route::put('/disponibilite', [Pro\DashboardController::class, 'availability'])->middleware('shop:availability')->name('availability');
+
+            // Dépannage en direct : demandes des conducteurs en panne à proximité
+            Route::middleware(['shop:assist', 'feature:assist_enabled'])->group(function () {
+                Route::get('/depannages', [Pro\AssistController::class, 'index'])->name('assist.index');
+                Route::get('/depannages/compteur', [Pro\AssistController::class, 'count'])->name('assist.count');
+                Route::post('/depannages/{assist}/accepter', [Pro\AssistController::class, 'accept'])->middleware('throttle:30,1')->name('assist.accept');
+                Route::post('/depannages/{assist}/etape', [Pro\AssistController::class, 'update'])->name('assist.update');
+            });
 
             // Boutiques du commerçant et changement de boutique active
             Route::get('/boutiques', [Pro\ShopController::class, 'index'])->name('shops.index');
@@ -194,6 +217,7 @@ Route::middleware('auth')->group(function () {
         Route::middleware('can:providers.view')->group(function () {
             Route::get('/prestataires', [Admin\ProviderController::class, 'index'])->name('providers.index');
             Route::get('/metiers/{type:slug}', [Admin\TradeController::class, 'show'])->name('trades.show');
+            Route::get('/depannages', [Admin\AssistController::class, 'index'])->name('assist.index');
             Route::get('/prestataires/{provider}', [Admin\ProviderController::class, 'show'])->name('providers.show');
         });
         // Verrous anti-erreur : les actions d'administration (middleware « unlocked ») refusent un élément verrouillé.
@@ -208,6 +232,7 @@ Route::middleware('auth')->group(function () {
         Route::middleware(['can:providers.manage', 'unlocked'])->group(function () {
             Route::get('/prestataires/{provider}/modifier', [Admin\ProviderController::class, 'edit'])->name('providers.edit');
             Route::put('/prestataires/{provider}', [Admin\ProviderController::class, 'update'])->name('providers.update');
+            Route::post('/depannages/{assist}/fermer', [Admin\AssistController::class, 'close'])->name('assist.close');
             Route::post('/prestataires/{provider}/valider', [Admin\ProviderController::class, 'approve'])->name('providers.approve');
             Route::post('/prestataires/{provider}/refuser', [Admin\ProviderController::class, 'reject'])->name('providers.reject');
             Route::post('/prestataires/{provider}/suspendre', [Admin\ProviderController::class, 'suspend'])->name('providers.suspend');

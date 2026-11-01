@@ -12,6 +12,14 @@
             @endforeach
         </div>
 
+        @if (feature('assist_enabled'))
+            <a href="{{ route('assist.create') }}" class="mt-6 flex items-center gap-4 rounded-2xl bg-red-600 px-5 py-4 text-white shadow-lg hover:bg-red-700">
+                <span class="text-3xl">🆘</span>
+                <span class="flex-1"><span class="block text-lg font-extrabold">Demander un dépannage</span><span class="block text-sm text-white/85">Votre position est envoyée aux prestataires les plus proches.</span></span>
+                <span class="text-2xl">→</span>
+            </a>
+        @endif
+
         <h2 class="mt-8 mb-3 text-lg font-bold">Panne sur la route ?</h2>
         <div class="grid grid-cols-2 gap-3">
             <a href="{{ route('search', ['type' => 'depanneur', 'open_now' => 1]) }}" class="card p-4 text-center">
@@ -28,8 +36,5 @@
             </a>
         </div>
 
-        <p class="mt-6 rounded-xl bg-ink-100 p-4 text-sm text-ink-600">
-            Le bouton <strong>SOS</strong> (alerte envoyée automatiquement aux dépanneurs proches) arrive dans une prochaine version de MaPanne.
-        </p>
     </div>
 </x-layouts.app>
