@@ -17,11 +17,12 @@ class ImageOptimizer
 {
     public const QUALITY = 80;
 
-    public static function store(UploadedFile $file, string $directory, int $maxSide = 1600): string
+    /** $disk : « public » (photos visibles) ou « local » (fichiers privés, ex. preuves de paiement). */
+    public static function store(UploadedFile $file, string $directory, int $maxSide = 1600, string $disk = 'public'): string
     {
         $image = function_exists('imagecreatefromstring') ? @imagecreatefromstring((string) file_get_contents($file->getRealPath())) : false;
         if (! $image instanceof GdImage) {
-            return $file->store($directory, 'public');
+            return $file->store($directory, $disk);
         }
 
         $image = self::orient($image, $file);
@@ -38,7 +39,7 @@ class ImageOptimizer
         imagedestroy($image);
 
         $path = trim($directory, '/').'/'.Str::random(40).($webp ? '.webp' : '.jpg');
-        Storage::disk('public')->put($path, $binary);
+        Storage::disk($disk)->put($path, $binary);
 
         return $path;
     }

@@ -2,13 +2,13 @@
     <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
             <h1 class="text-2xl font-extrabold">Abonnements</h1>
-            <p class="text-sm text-ink-500">Encaissé ce mois : <strong>{{ number_format($revenue, 0, ',', ' ') }} FCFA</strong>. Le paiement se fait hors plateforme : activez l'offre après réception.</p>
+            <p class="text-sm text-ink-500">Encaissé ce mois : <strong>{{ number_format($revenue, 0, ',', ' ') }} FCFA</strong>. Paiement hors plateforme (Orange Money, Moov Money) : vérifiez la preuve sur votre téléphone opérateur, puis activez ou refusez.</p>
         </div>
         <a href="{{ route('admin.plans.index') }}" class="btn btn-ghost"><x-icon name="layers" /> Gérer les offres</a>
     </div>
 
     <div class="mb-4 flex flex-wrap gap-2">
-        @foreach (['pending' => 'À activer', 'active' => 'En cours', 'expiring' => 'Échéance proche', 'expired' => 'Expirés', 'cancelled' => 'Annulés', 'all' => 'Tous'] as $key => $label)
+        @foreach (['proof' => 'Preuves à vérifier', 'pending' => 'En attente de paiement', 'active' => 'En cours', 'expiring' => 'Échéance proche', 'expired' => 'Expirés', 'rejected' => 'Refusés', 'cancelled' => 'Annulés', 'all' => 'Tous'] as $key => $label)
             <a href="{{ route('admin.subscriptions.index', ['status' => $key] + request()->only(['q', 'plan', 'payment', 'sort', 'dir'])) }}" @class([
                 'chip px-3 py-1.5 text-sm',
                 'on-color bg-ink-800 text-white' => $status === $key,
@@ -61,22 +61,53 @@
                             </p>
                         </div>
                         @if ($s->status === 'pending')
-                            <button @click="open = !open" class="btn btn-primary btn-sm">Activer</button>
+                            <button @click="open = !open" class="btn btn-primary btn-sm">{{ $s->hasProof() ? 'Valider ou refuser' : 'Activer' }}</button>
                         @endif
                         @if (in_array($s->status, ['pending', 'active'], true))
                             <form method="POST" action="{{ route('admin.subscriptions.cancel', $s) }}" onsubmit="return confirm('Annuler cet abonnement ?')">@csrf<button class="btn btn-ghost btn-sm">Annuler</button></form>
                         @endif
                     </div>
+                    @if ($s->hasProof())
+                        {{-- Preuve envoyée par le prestataire --}}
+                        <div class="mt-3 flex flex-wrap items-center gap-4 rounded-xl border border-sky-100 bg-sky-50/70 p-3">
+                            @if ($s->proof_path)
+                                <a href="{{ route('admin.subscriptions.proof', $s) }}" target="_blank" rel="noopener" class="shrink-0" title="Ouvrir la capture">
+                                    <img src="{{ route('admin.subscriptions.proof', $s) }}" alt="Capture du paiement" class="h-24 w-20 rounded-lg object-cover shadow ring-1 ring-sky-200" loading="lazy">
+                                </a>
+                            @endif
+                            <dl class="grid flex-1 gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
+                                <div><dt class="inline text-ink-500">Opérateur :</dt> <dd class="inline font-semibold">{{ $s->operatorLabel() }}</dd></div>
+                                <div><dt class="inline text-ink-500">Payé depuis :</dt> <dd class="inline font-semibold">{{ \App\Support\Phone::format($s->payer_phone) }}</dd></div>
+                                <div><dt class="inline text-ink-500">Référence :</dt> <dd class="inline font-mono font-semibold">{{ $s->payment_reference }}</dd></div>
+                                <div><dt class="inline text-ink-500">Envoyée :</dt> <dd class="inline">{{ $s->proof_submitted_at->format('d/m/Y H:i') }}</dd></div>
+                            </dl>
+                            @if ($s->status === 'pending' && $s->payment_operator && \App\Models\Subscription::referenceUsed($s->payment_operator, $s->payment_reference, $s->id))
+                                <p class="w-full rounded-lg bg-red-100 px-3 py-2 text-sm font-semibold text-red-800">⚠️ Cette référence figure déjà sur un autre abonnement.</p>
+                            @endif
+                        </div>
+                    @endif
+                    @if ($s->rejected_reason)
+                        <p class="mt-2 text-sm text-red-700">Motif du refus : {{ $s->rejected_reason }}</p>
+                    @endif
                     @if ($s->status === 'pending')
-                        <form x-cloak x-show="open" method="POST" action="{{ route('admin.subscriptions.activate', $s) }}" class="mt-3 grid gap-2 rounded-xl bg-ink-50 p-3 sm:grid-cols-4">
-                            @csrf
-                            <input type="number" name="amount" value="{{ $s->amount }}" min="0" class="input" placeholder="Montant reçu" aria-label="Montant reçu">
-                            <select name="payment_method" class="input" aria-label="Moyen de paiement">
-                                @foreach ($paymentMethods as $m) <option>{{ $m }}</option> @endforeach
-                            </select>
-                            <input name="payment_reference" class="input" placeholder="Référence de transaction">
-                            <button class="btn btn-primary">Confirmer le paiement</button>
-                        </form>
+                        <div x-cloak x-show="open" class="mt-3 space-y-2 rounded-xl bg-ink-50 p-3">
+                            <form method="POST" action="{{ route('admin.subscriptions.activate', $s) }}" class="grid gap-2 sm:grid-cols-4">
+                                @csrf
+                                <input type="number" name="amount" value="{{ $s->amount }}" min="0" class="input" placeholder="Montant reçu" aria-label="Montant reçu">
+                                <select name="payment_method" class="input" aria-label="Moyen de paiement">
+                                    @foreach ($paymentMethods as $m) <option @selected($m === $s->payment_method)>{{ $m }}</option> @endforeach
+                                </select>
+                                <input name="payment_reference" value="{{ $s->payment_reference }}" class="input" placeholder="Référence de transaction">
+                                <button class="btn btn-primary">Paiement reçu : activer</button>
+                            </form>
+                            @if ($s->hasProof())
+                                <form method="POST" action="{{ route('admin.subscriptions.reject', $s) }}" class="flex flex-wrap gap-2">
+                                    @csrf
+                                    <input name="reason" class="input flex-1" placeholder="Motif du refus (ex. paiement introuvable, montant incomplet)" required maxlength="255">
+                                    <button class="btn btn-ghost text-red-700">Refuser le paiement</button>
+                                </form>
+                            @endif
+                        </div>
                     @endif
                 </article>
             @empty

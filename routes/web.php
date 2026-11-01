@@ -170,6 +170,8 @@ Route::middleware('auth')->group(function () {
             Route::middleware(['shop:subscription', 'feature:subscriptions_enabled'])->group(function () {
                 Route::get('/abonnement', [Pro\SubscriptionController::class, 'show'])->name('subscription');
                 Route::post('/abonnement', [Pro\SubscriptionController::class, 'store'])->middleware('throttle:10,1')->name('subscription.store');
+                Route::get('/abonnement/{subscription}/paiement', [Pro\SubscriptionController::class, 'pay'])->name('subscription.pay');
+                Route::post('/abonnement/{subscription}/paiement', [Pro\SubscriptionController::class, 'proof'])->middleware('throttle:10,1')->name('subscription.proof');
                 Route::delete('/abonnement/{subscription}', [Pro\SubscriptionController::class, 'cancel'])->name('subscription.cancel');
             });
 
@@ -278,6 +280,8 @@ Route::middleware('auth')->group(function () {
             Route::post('/abonnements', [Admin\SubscriptionController::class, 'store'])->name('subscriptions.store');
             Route::post('/abonnements/{subscription}/activer', [Admin\SubscriptionController::class, 'activate'])->name('subscriptions.activate');
             Route::post('/abonnements/{subscription}/annuler', [Admin\SubscriptionController::class, 'cancel'])->name('subscriptions.cancel');
+            Route::post('/abonnements/{subscription}/refuser', [Admin\SubscriptionController::class, 'reject'])->name('subscriptions.reject');
+            Route::get('/abonnements/{subscription}/preuve', [Admin\SubscriptionController::class, 'proof'])->name('subscriptions.proof');
             Route::get('/offres', [Admin\PlanController::class, 'index'])->name('plans.index');
             Route::get('/offres/nouvelle', [Admin\PlanController::class, 'create'])->name('plans.create');
             Route::post('/offres', [Admin\PlanController::class, 'store'])->name('plans.store');

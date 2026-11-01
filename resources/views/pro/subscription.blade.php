@@ -5,13 +5,35 @@
         @if ($current?->ends_at) — jusqu'au {{ $current->ends_at->format('d/m/Y') }} ({{ $current->daysLeft() }} jour(s) restant(s)) @endif
     </p>
 
-    @if ($pending)
-        <div class="mb-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-            <p class="font-semibold">Demande en attente : offre {{ $pending->plan->name }} ({{ $pending->plan->priceLabel() }})</p>
-            <p class="mt-1 whitespace-pre-line">{{ setting('subscription_payment_instructions') }}</p>
-            <p class="mt-1">Support : {{ \App\Support\Phone::format(setting('support_phone')) }} · {{ setting('support_email') }}</p>
-            <form method="POST" action="{{ route('pro.subscription.cancel', $pending) }}" class="mt-2">@csrf @method('DELETE')<button class="text-xs underline">Annuler la demande</button></form>
+    @if ($rejected && ! $pending)
+        <div class="mb-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-900">
+            <p class="font-semibold">Paiement non validé pour l'offre {{ $rejected->plan->name }} ({{ $rejected->reviewed_at->format('d/m/Y') }})</p>
+            <p class="mt-1">Motif : {{ $rejected->rejected_reason }}</p>
+            <p class="mt-1">Refaites la demande avec la bonne preuve, ou contactez le support : {{ \App\Support\Phone::format(setting('support_phone')) }}.</p>
         </div>
+    @endif
+
+    @if ($pending)
+        @if ($pending->hasProof())
+            <div class="mb-5 flex flex-wrap items-center gap-4 rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-900">
+                <span class="text-3xl">🔎</span>
+                <div class="min-w-0 flex-1">
+                    <p class="font-semibold">Paiement en cours de vérification : offre {{ $pending->plan->name }} ({{ $pending->plan->priceLabel() }})</p>
+                    <p class="mt-1">{{ $pending->operatorLabel() }} depuis le {{ \App\Support\Phone::format($pending->payer_phone) }} · réf. {{ $pending->payment_reference }} · envoyé le {{ $pending->proof_submitted_at->format('d/m/Y à H:i') }}</p>
+                </div>
+                <a href="{{ route('pro.subscription.pay', $pending) }}" class="btn btn-ghost btn-sm">Corriger la preuve</a>
+            </div>
+        @else
+            <div class="mb-5 flex flex-wrap items-center gap-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                <span class="text-3xl">💳</span>
+                <div class="min-w-0 flex-1">
+                    <p class="font-semibold">Offre {{ $pending->plan->name }} choisie : il reste à payer {{ $pending->plan->priceLabel() }}</p>
+                    <p class="mt-1">Payez par Orange Money ou Moov Money, puis envoyez la preuve.</p>
+                    <form method="POST" action="{{ route('pro.subscription.cancel', $pending) }}" class="mt-1">@csrf @method('DELETE')<button class="text-xs underline">Annuler la demande</button></form>
+                </div>
+                <a href="{{ route('pro.subscription.pay', $pending) }}" class="btn btn-primary">Payer et envoyer la preuve</a>
+            </div>
+        @endif
     @endif
 
     <div @class(['grid gap-4', 'md:grid-cols-2' => $plans->count() === 2, 'md:grid-cols-3' => $plans->count() >= 3])>

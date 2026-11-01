@@ -9,8 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
 /**
- * Abonnement d'un prestataire. Le paiement se fait hors plateforme (espèces, mobile money) :
- * le prestataire demande une offre, l'admin l'active après réception du paiement.
+ * Abonnement d'un prestataire. Le paiement se fait hors plateforme (Orange Money, Moov Money, espèces) :
+ * le prestataire demande une offre, envoie la preuve de paiement, l'admin vérifie puis active ou refuse.
  */
 class Subscription extends Model
 {
@@ -19,9 +19,19 @@ class Subscription extends Model
         'active' => ['Actif', 'bg-emerald-100 text-emerald-800'],
         'expired' => ['Expiré', 'bg-ink-100 text-ink-600'],
         'cancelled' => ['Annulé', 'bg-red-100 text-red-700'],
+        'rejected' => ['Paiement refusé', 'bg-red-100 text-red-700'],
     ];
 
-    protected $fillable = ['plan_id', 'status', 'starts_at', 'ends_at', 'amount', 'payment_method', 'payment_reference', 'notes'];
+    /** Paiement mobile hors plateforme : opérateurs proposés (numéros dans Réglages › Abonnements). */
+    public const OPERATORS = ['orange' => 'Orange Money', 'moov' => 'Moov Money'];
+
+    /** Statuts où une référence de transaction est « utilisée ». */
+    public const USED_STATUSES = ['pending', 'active', 'expired'];
+
+    protected $fillable = [
+        'plan_id', 'status', 'starts_at', 'ends_at', 'amount', 'payment_method', 'payment_reference', 'notes',
+        'payment_operator', 'payer_phone', 'proof_path', 'proof_submitted_at', 'rejected_reason', 'reviewed_at',
+    ];
 
     protected function casts(): array
     {
@@ -29,6 +39,8 @@ class Subscription extends Model
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
             'amount' => 'integer',
+            'proof_submitted_at' => 'datetime',
+            'reviewed_at' => 'datetime',
         ];
     }
 
@@ -64,6 +76,32 @@ class Subscription extends Model
         return self::STATUSES[$this->status][1] ?? '';
     }
 
+    /** Opérateurs dont l'admin a renseigné le numéro de réception. */
+    public static function operators(): array
+    {
+        return array_filter(self::OPERATORS, fn ($label, $key) => filled(setting("payment_{$key}_number")), ARRAY_FILTER_USE_BOTH);
+    }
+
+    public function operatorLabel(): ?string
+    {
+        return self::OPERATORS[$this->payment_operator] ?? null;
+    }
+
+    public function hasProof(): bool
+    {
+        return $this->proof_submitted_at !== null;
+    }
+
+    /** Référence déjà utilisée par un autre abonnement (paiement réutilisé ?). */
+    public static function referenceUsed(string $operator, string $reference, ?int $except = null): bool
+    {
+        return static::where('payment_operator', $operator)
+            ->whereRaw('upper(payment_reference) = ?', [mb_strtoupper(trim($reference))])
+            ->whereIn('status', self::USED_STATUSES)
+            ->when($except, fn ($q) => $q->whereKeyNot($except))
+            ->exists();
+    }
+
     public function daysLeft(): ?int
     {
         return $this->ends_at ? max(0, (int) ceil(now()->diffInDays($this->ends_at, false))) : null;
@@ -83,6 +121,7 @@ class Subscription extends Model
             'starts_at' => $start,
             'ends_at' => $days > 0 ? $start->copy()->addDays($days) : null,
             'activated_by' => $by?->id,
+            'reviewed_at' => $by ? now() : $this->reviewed_at,
         ])->save();
 
         $this->provider->syncPlanBenefits();

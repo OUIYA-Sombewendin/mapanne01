@@ -174,7 +174,11 @@ class SettingsRegistry
                 'icon' => '💳',
                 'settings' => [
                     'subscriptions_enabled' => ['type' => 'bool', 'label' => 'Abonnements activés (les fonctionnalités dépendent de l\'offre)', 'default' => false, 'help' => 'Désactivés : toutes les fonctionnalités sont gratuites pour tous les prestataires.'],
-                    'subscription_payment_instructions' => ['type' => 'text', 'label' => 'Instructions de paiement affichées au prestataire', 'default' => 'Payez par Orange Money ou Moov Money au numéro du support en indiquant le nom de votre établissement. L\'équipe active votre offre dès réception.'],
+                    'payment_orange_number' => ['type' => 'string', 'label' => 'Numéro Orange Money qui reçoit les paiements', 'default' => '', 'help' => 'Vide = Orange Money non proposé.'],
+                    'payment_orange_holder' => ['type' => 'string', 'label' => 'Nom affiché du titulaire Orange Money', 'default' => ''],
+                    'payment_moov_number' => ['type' => 'string', 'label' => 'Numéro Moov Money qui reçoit les paiements', 'default' => '', 'help' => 'Vide = Moov Money non proposé.'],
+                    'payment_moov_holder' => ['type' => 'string', 'label' => 'Nom affiché du titulaire Moov Money', 'default' => ''],
+                    'subscription_payment_instructions' => ['type' => 'text', 'label' => 'Instructions de paiement affichées au prestataire', 'default' => 'Envoyez le montant exact depuis votre téléphone au numéro indiqué, puis envoyez ici la capture d\'écran du message de confirmation, le numéro utilisé et la référence de la transaction. L\'équipe vérifie et active votre offre.'],
                     'subscription_reminder_days' => ['type' => 'int', 'label' => 'Prévenir le prestataire X jours avant l\'échéance', 'default' => 5],
                     'notify_admin_subscription_request' => ['type' => 'bool', 'label' => 'Alerter l\'admin à chaque demande d\'abonnement', 'default' => true],
                 ],

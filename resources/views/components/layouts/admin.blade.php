@@ -8,7 +8,7 @@
         'reports' => \App\Models\Report::where('status', \App\Enums\ReportStatus::Open)->count(),
         'reviews' => \App\Models\Review::where('is_pending', true)->count(),
         'products' => \App\Models\Product::whereNull('approved_at')->count(),
-        'subscriptions' => \App\Models\Subscription::where('status', 'pending')->count(),
+        'subscriptions' => \App\Models\Subscription::where('status', 'pending')->whereNotNull('proof_submitted_at')->count(),
         'assist' => \App\Models\AssistRequest::active()->count(),
     ]);
     $typeParam = request()->routeIs('admin.providers.*') ? request('type') : null;
@@ -65,7 +65,7 @@
         ['Signalements ouverts', $todo['reports'], $me->can('moderation.manage') ? route('admin.reports.index') : null],
         ['Avis en attente', $todo['reviews'], $me->can('moderation.manage') ? route('admin.reviews.index', ['filter' => 'pending']) : null],
         ['Produits en attente', $todo['products'], $me->can('marketplace.manage') ? route('admin.marketplace.index', ['filter' => 'pending']) : null],
-        ['Abonnements à activer', $todo['subscriptions'], $me->can('subscriptions.manage') ? route('admin.subscriptions.index') : null],
+        ['Paiements à vérifier', $todo['subscriptions'], $me->can('subscriptions.manage') ? route('admin.subscriptions.index') : null],
     ], fn ($n) => $n[1] > 0 && $n[2]);
     $notifCount = array_sum(array_column($notifications, 1));
 @endphp

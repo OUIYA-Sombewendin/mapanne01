@@ -13,6 +13,7 @@ use App\Support\Notifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 /** Suivi des abonnements : demandes à activer après paiement, abonnements en cours, échéances. */
@@ -20,13 +21,15 @@ class SubscriptionController extends Controller
 {
     public function index(Request $request): View
     {
-        $status = (string) $request->query('status', 'pending');
+        $status = (string) $request->query('status', 'proof');
         $q = trim((string) $request->query('q'));
 
         $query = Subscription::query()->with(['provider:id,business_name,slug,type,phone', 'plan:id,name,price', 'activator:id,name'])
             ->when($q !== '', fn ($query) => $query->whereHas('provider', fn ($p) => $p->where('business_name', 'ilike', '%'.str_replace(['%', '_'], ['\%', '\_'], $q).'%')));
 
         match ($status) {
+            'proof' => $query->where('status', 'pending')->whereNotNull('proof_submitted_at'),
+            'pending' => $query->where('status', 'pending')->whereNull('proof_submitted_at'),
             'active' => $query->current(),
             'expiring' => $query->current()->whereNotNull('ends_at')->where('ends_at', '<=', now()->addDays(max(1, (int) setting('subscription_reminder_days')))),
             'all' => null,
@@ -44,7 +47,8 @@ class SubscriptionController extends Controller
                 ], 'date')->paginate(30)->withQueryString(),
             'status' => $status,
             'counts' => [
-                'pending' => Subscription::where('status', 'pending')->count(),
+                'proof' => Subscription::where('status', 'pending')->whereNotNull('proof_submitted_at')->count(),
+                'pending' => Subscription::where('status', 'pending')->whereNull('proof_submitted_at')->count(),
                 'active' => Subscription::current()->count(),
                 'expiring' => Subscription::current()->whereNotNull('ends_at')->where('ends_at', '<=', now()->addDays(max(1, (int) setting('subscription_reminder_days'))))->count(),
             ],
@@ -77,6 +81,36 @@ class SubscriptionController extends Controller
         abort_unless($subscription->status === 'pending', 422);
 
         return $this->doActivate($request, $subscription, $request->validate($this->paymentRules()));
+    }
+
+    /** Paiement non trouvé ou incorrect : le prestataire est prévenu avec le motif. */
+    public function reject(Request $request, Subscription $subscription): RedirectResponse
+    {
+        abort_unless($subscription->status === 'pending', 422);
+        $reason = $request->validate(['reason' => ['required', 'string', 'max:255']])['reason'];
+
+        $subscription->forceFill(['status' => 'rejected', 'rejected_reason' => $reason, 'reviewed_at' => now()])->save();
+        ActivityLog::record('subscription.rejected', $subscription, ['offre' => $subscription->plan->name, 'motif' => $reason]);
+
+        Notifier::send($subscription->provider->user, new SimpleMessage(
+            'Paiement non validé : offre '.$subscription->plan->name,
+            ['Nous n\'avons pas pu valider votre paiement pour l\'offre '.$subscription->plan->name.'.', 'Motif : '.$reason, 'Vous pouvez refaire la demande avec la bonne preuve, ou contacter le support.'],
+            'Mon abonnement',
+            route('pro.subscription'),
+        ));
+
+        return back()->with('success', 'Paiement refusé : le prestataire est prévenu.');
+    }
+
+    /** Capture du paiement (fichier privé, réservé aux admins des abonnements). */
+    public function proof(Subscription $subscription)
+    {
+        abort_unless($subscription->proof_path && Storage::disk('local')->exists($subscription->proof_path), 404);
+
+        return Storage::disk('local')->response($subscription->proof_path, null, [
+            'Cache-Control' => 'private, no-store',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 
     public function cancel(Subscription $subscription): RedirectResponse

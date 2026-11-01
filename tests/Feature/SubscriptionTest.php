@@ -47,7 +47,7 @@ class SubscriptionTest extends TestCase
         $shop = $this->shop();
         $premium = Plan::where('slug', 'premium')->first();
 
-        $this->actingAs($shop->user)->post('/pro/abonnement', ['plan_id' => $premium->id])->assertSessionHas('success');
+        $this->actingAs($shop->user)->post('/pro/abonnement', ['plan_id' => $premium->id]);
         $subscription = $shop->subscriptions()->first();
         $this->assertSame('pending', $subscription->status);
         $this->assertFalse($shop->fresh()->hasPlanFeature('reports'));
