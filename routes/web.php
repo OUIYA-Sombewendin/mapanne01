@@ -193,6 +193,7 @@ Route::middleware('auth')->group(function () {
 
         Route::middleware('can:providers.view')->group(function () {
             Route::get('/prestataires', [Admin\ProviderController::class, 'index'])->name('providers.index');
+            Route::get('/metiers/{type:slug}', [Admin\TradeController::class, 'show'])->name('trades.show');
             Route::get('/prestataires/{provider}', [Admin\ProviderController::class, 'show'])->name('providers.show');
         });
         // Verrous anti-erreur : les actions d'administration (middleware « unlocked ») refusent un élément verrouillé.
@@ -270,6 +271,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/types', [Admin\ContentController::class, 'types'])->name('types.index');
             Route::post('/types', [Admin\ContentController::class, 'storeType'])->name('types.store');
             Route::put('/types/{type}', [Admin\ContentController::class, 'updateType'])->name('types.update');
+            Route::put('/metiers/{type:slug}/modules', [Admin\TradeController::class, 'modules'])->name('trades.modules');
 
             // Formulaires des métiers : champs ajoutés par l'admin aux fiches pro
             Route::get('/formulaires', [Admin\FormController::class, 'index'])->name('forms.index');

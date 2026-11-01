@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\Lockable;
+use App\Support\TradeModules;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -28,7 +29,7 @@ class ProviderType extends Model
 
     public const PARTS_SHOP = 'commercant';
 
-    protected $fillable = ['slug', 'name', 'short_name', 'icon', 'description', 'can_sell_parts', 'profile_kind', 'is_active', 'position'];
+    protected $fillable = ['slug', 'name', 'short_name', 'icon', 'description', 'can_sell_parts', 'profile_kind', 'modules', 'is_active', 'position'];
 
     private static ?Collection $cache = null;
 
@@ -37,11 +38,17 @@ class ProviderType extends Model
         return [
             'can_sell_parts' => 'boolean',
             'is_active' => 'boolean',
+            'modules' => 'array',
         ];
     }
 
     protected static function booted(): void
     {
+        // Seuls les métiers avec le module « Catalogue » vendent des pièces.
+        static::saving(function (self $type) {
+            $type->modules = TradeModules::normalize($type->modules ?? []);
+            $type->can_sell_parts = in_array('catalog', $type->modules, true);
+        });
         static::saved(fn () => static::flushCache());
         static::deleted(fn () => static::flushCache());
     }
@@ -114,7 +121,19 @@ class ProviderType extends Model
 
     public function canSellParts(): bool
     {
-        return $this->can_sell_parts;
+        return $this->hasModule('catalog');
+    }
+
+    /** Module activé pour ce métier (voir App\Support\TradeModules). */
+    public function hasModule(string $module): bool
+    {
+        return in_array($module, $this->modules ?? [], true);
+    }
+
+    /** Zone de l'espace pro ouverte pour ce métier (une zone qui n'est pas un module l'est toujours). */
+    public function allowsArea(string $area): bool
+    {
+        return ! in_array($area, TradeModules::keys(), true) || $this->hasModule($area);
     }
 
     /** Fiche métier rattachée (voir App\Support\ProviderProfiles), ou null. */

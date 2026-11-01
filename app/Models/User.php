@@ -134,10 +134,14 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->memberships->firstWhere('id', $shop->id)?->pivot->role;
     }
 
-    /** Accès à une zone de l'espace pro pour la boutique active (voir App\Support\ShopTeam). */
+    /**
+     * Accès à une zone de l'espace pro pour la boutique active : le métier doit avoir le module
+     * (voir App\Support\TradeModules) et le rôle du compte doit l'autoriser (voir App\Support\ShopTeam).
+     */
     public function canShop(string $area): bool
     {
-        return ShopTeam::allows($this->shopRole($this->provider), $area);
+        return (bool) $this->provider?->type?->allowsArea($area)
+            && ShopTeam::allows($this->shopRole($this->provider), $area);
     }
 
     public function forgetShops(): void

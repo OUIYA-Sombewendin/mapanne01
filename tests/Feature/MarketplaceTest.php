@@ -116,13 +116,18 @@ class MarketplaceTest extends TestCase
         $this->assertFalse($product->refresh()->is_hidden);
     }
 
-    public function test_only_parts_shops_and_garages_have_a_catalog(): void
+    public function test_only_trades_with_the_catalog_module_have_a_catalog(): void
     {
         $mechanic = Provider::factory()->approved()->create(['type' => ProviderType::MECHANIC]);
         $garage = Provider::factory()->approved()->create(['type' => ProviderType::GARAGE]);
 
         $this->actingAs($mechanic->user)->get('/pro/catalogue')->assertForbidden();
-        $this->actingAs($garage->user)->get('/pro/catalogue')->assertOk();
+        $this->actingAs($garage->user)->get('/pro/catalogue')->assertForbidden();
+        $this->actingAs($garage->user)->get('/pro')->assertOk()->assertDontSee('Catalogue');
+
+        // L'admin peut ouvrir le catalogue à un métier.
+        ProviderType::bySlug(ProviderType::GARAGE)->update(['modules' => ['services', 'catalog']]);
+        $this->actingAs($garage->user->fresh())->get('/pro/catalogue')->assertOk();
     }
 
     public function test_products_disappear_when_shop_changes_to_a_non_selling_type(): void

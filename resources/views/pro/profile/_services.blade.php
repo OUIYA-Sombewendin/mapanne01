@@ -1,4 +1,5 @@
 {{-- Services du métier uniquement (filtrés par le contrôleur). Paramètres : $id, $title, $text. --}}
+@if ($provider->hasModule('services'))
 <section id="{{ $id ?? 'services' }}" class="card scroll-mt-28 p-6">
     @include('pro._section-head', ['icon' => 'layers', 'title' => $title, 'text' => $text ?? 'Cochez ce que vous faites : les clients vous trouvent en cherchant ces services.'])
     <div class="space-y-5">
@@ -20,3 +21,4 @@
     </div>
     @error('services.*') <p class="field-error">{{ $message }}</p> @enderror
 </section>
+@endif

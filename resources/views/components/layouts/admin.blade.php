@@ -21,7 +21,7 @@
         'Prestataires' => array_merge(
             [['admin.providers.index', [], request()->routeIs('admin.providers.*') && ! $typeParam, 'providers', 'Inscriptions et fiches', $todo['providers'] + $todo['review'], $me->can('providers.view')]],
             \App\Models\ProviderType::cached()->where('is_active', true)->values()->map(fn ($t) => [
-                'admin.providers.index', ['type' => $t->slug, 'status' => 'all'], $typeParam === $t->slug, 'emoji:'.$t->icon(), $t->shortLabel(), null, $me->can('providers.view'),
+                'admin.trades.show', ['type' => $t->slug], (request()->routeIs('admin.trades.*') && request()->route('type')?->slug === $t->slug) || $typeParam === $t->slug, 'emoji:'.$t->icon(), $t->shortLabel(), null, $me->can('providers.view'),
             ])->all(),
         ),
         'Marketplace et modération' => [

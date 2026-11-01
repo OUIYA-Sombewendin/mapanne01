@@ -44,7 +44,7 @@ class ActivityLog extends Model
         'provider.edited_by_admin' => 'Fiche modifiée par l\'admin', 'provider.changes_reviewed' => 'Changements vérifiés',
         'provider.sensitive_changes' => 'Changement sensible d\'une fiche', 'provider.resubmitted' => 'Fiche renvoyée en vérification',
         'provider.featured' => 'Mis à la une', 'provider.unfeatured' => 'Retiré de la une',
-        'provider_type.created' => 'Type de prestataire créé', 'provider_type.updated' => 'Type de prestataire modifié',
+        'provider_type.created' => 'Type de prestataire créé', 'provider_type.updated' => 'Type de prestataire modifié', 'provider_type.modules' => 'Modules d\'un métier modifiés',
         'review.approved' => 'Avis publié', 'review.hidden' => 'Avis masqué', 'review.restored' => 'Avis rétabli',
         'role.created' => 'Rôle créé', 'role.updated' => 'Rôle modifié', 'role.deleted' => 'Rôle supprimé',
         'service.created' => 'Service créé', 'settings.updated' => 'Réglages modifiés',

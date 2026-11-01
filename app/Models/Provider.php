@@ -294,6 +294,12 @@ class Provider extends Model
         return $this->type->canSellParts();
     }
 
+    /** Module activé pour le métier de ce prestataire (voir App\Support\TradeModules). */
+    public function hasModule(string $module): bool
+    {
+        return (bool) $this->type?->hasModule($module);
+    }
+
     // Visibilité publique -----------------------------------------------------
 
     /**

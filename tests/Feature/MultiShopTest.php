@@ -62,7 +62,7 @@ class MultiShopTest extends TestCase
 
         Setting::store(['max_shops_per_owner' => 5]);
         $mechanic = Provider::factory()->approved()->create(['type' => ProviderType::MECHANIC]);
-        $this->actingAs($mechanic->user)->get('/pro/boutiques/nouvelle')->assertRedirect('/pro/boutiques');
+        $this->actingAs($mechanic->user)->get('/pro/boutiques/nouvelle')->assertForbidden();
     }
 
     public function test_owner_adds_employees_with_limited_access(): void

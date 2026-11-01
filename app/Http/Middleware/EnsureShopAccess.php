@@ -26,6 +26,10 @@ class EnsureShopAccess
             return redirect()->route('verification.notice')->with('error', 'Confirmez votre adresse email pour accéder à la boutique.');
         }
 
+        if (! $user->provider->type->allowsArea($area)) {
+            abort(403, '« '.(ShopTeam::AREAS[$area] ?? $area).' » n\'est pas proposé pour votre métier ('.$user->provider->type->label().').');
+        }
+
         if (! $user->canShop($area)) {
             abort(403, '« '.(ShopTeam::AREAS[$area] ?? $area).' » n\'est pas accessible avec votre rôle ('.ShopTeam::label($user->shopRole($user->provider)).').');
         }

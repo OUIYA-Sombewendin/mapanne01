@@ -107,10 +107,13 @@ class AdminSettingsTest extends TestCase
     public function test_selling_right_follows_the_type_setting(): void
     {
         $product = Product::factory()->create();
-        ProviderType::bySlug(ProviderType::PARTS_SHOP)->update(['can_sell_parts' => false]);
+        $type = ProviderType::bySlug(ProviderType::PARTS_SHOP);
+        $type->update(['modules' => ['services', 'stock']]);
 
+        // Sans catalogue, plus de vente ; le stock (qui en dépend) est retiré aussi.
         $this->assertSame(0, Product::visible()->count());
-        ProviderType::bySlug(ProviderType::PARTS_SHOP)->update(['can_sell_parts' => true]);
+        $this->assertSame(['services'], $type->fresh()->modules);
+        $type->update(['modules' => ['services', 'catalog']]);
         $this->assertSame(1, Product::visible()->count());
         $this->assertTrue($product->fresh()->isVisible());
     }

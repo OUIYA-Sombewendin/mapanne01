@@ -103,7 +103,9 @@ class ProfileController extends Controller
         }
 
         $provider->save();
-        $provider->services()->sync($data['services'] ?? []);
+        if ($provider->hasModule('services')) {
+            $provider->services()->sync($data['services'] ?? []);
+        }
         if ($kind && $request->has('details.'.$kind)) {
             $provider->saveDetails((array) $request->input('details.'.$kind));
         }

@@ -45,7 +45,7 @@ class ShopController extends Controller
         }
 
         return view('pro.shop-create', [
-            'types' => ProviderType::active()->where('can_sell_parts', true)->values(),
+            'types' => ProviderType::active()->filter(fn (ProviderType $t) => $t->hasModule('shops'))->values(),
             'cities' => City::where('is_active', true)->orderBy('name')->with('neighborhoods:id,city_id,name,latitude,longitude')->get(),
         ]);
     }
@@ -58,7 +58,7 @@ class ShopController extends Controller
         $request->merge(['phone' => Phone::normalize($request->input('phone')) ?? $request->input('phone')]);
         $data = $request->validate([
             'business_name' => ['required', 'string', 'max:120'],
-            'type' => ['required', Rule::in(ProviderType::active()->where('can_sell_parts', true)->pluck('slug')->all())],
+            'type' => ['required', Rule::in(ProviderType::active()->filter(fn (ProviderType $t) => $t->hasModule('shops'))->pluck('slug')->all())],
             'phone' => ['required', new BurkinaPhone],
             'city_id' => ['required', Rule::exists('cities', 'id')->where('is_active', true)],
             'neighborhood_id' => ['nullable', Rule::exists('neighborhoods', 'id')->where('city_id', $request->input('city_id'))],

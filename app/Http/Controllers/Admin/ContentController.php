@@ -8,6 +8,7 @@ use App\Models\Page;
 use App\Models\ProviderType;
 use App\Support\Listing;
 use App\Support\ProviderProfiles;
+use App\Support\TradeModules;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -32,7 +33,10 @@ class ContentController extends Controller
         $data['slug'] = Str::slug($data['name']);
         abort_if(ProviderType::where('slug', $data['slug'])->exists(), 422, 'Ce type existe déjà.');
 
-        $type = ProviderType::create($data + ['position' => (int) ProviderType::max('position') + 1]);
+        $type = ProviderType::create($data + [
+            'position' => (int) ProviderType::max('position') + 1,
+            'modules' => TradeModules::defaults($data['profile_kind']),
+        ]);
         ActivityLog::record('provider_type.created', $type);
 
         return back()->with('success', 'Type « '.$type->name.' » ajouté.');
@@ -55,7 +59,6 @@ class ContentController extends Controller
             'description' => ['nullable', 'string', 'max:255'],
             'position' => ['nullable', 'integer', 'min:0', 'max:999'],
         ]);
-        $data['can_sell_parts'] = $request->boolean('can_sell_parts');
         $data['is_active'] = $request->boolean('is_active');
         $kind = $request->validate(['profile_kind' => ['nullable', Rule::in(array_keys(ProviderProfiles::kinds()))]])['profile_kind'] ?? null;
 

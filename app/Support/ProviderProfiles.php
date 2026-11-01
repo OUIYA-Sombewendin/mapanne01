@@ -229,6 +229,23 @@ class ProviderProfiles
         return $values;
     }
 
+    /** Valeur courte d'un champ du métier, pour une cellule de tableau (admin). */
+    public static function cell(string $kind, string $name, $profile): string
+    {
+        $field = self::kinds()[$kind]['fields'][$name] ?? null;
+        $value = $profile?->{$name};
+        if (! $field || $value === null || $value === '' || $value === []) {
+            return '—';
+        }
+
+        return match ($field['type']) {
+            'bool' => $value ? 'Oui' : 'Non',
+            'multi' => collect($value)->map(fn ($v) => $field['options'][$v] ?? $v)->implode(', '),
+            'decimal' => number_format((float) $value, 1, ',', ' '),
+            default => (string) $value,
+        };
+    }
+
     /**
      * Lignes lisibles pour la fiche publique.
      *
