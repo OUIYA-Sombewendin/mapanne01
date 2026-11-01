@@ -48,6 +48,17 @@ class Provider extends Model
     /** Champs dont la modification, une fois la fiche validée, doit être revue par l'admin. */
     public const SENSITIVE_FIELDS = ['business_name', 'type', 'phone', 'whatsapp', 'latitude', 'longitude', 'rccm'];
 
+    /**
+     * Champs verrouillés une fois la fiche validée (option « lock_approved_fields ») :
+     * le prestataire ne les change plus lui-même, il fait une demande que l'admin applique ou refuse.
+     */
+    public const LOCKED_FIELDS = ['business_name', 'phone', 'whatsapp', 'latitude', 'longitude', 'rccm'];
+
+    public const LOCKED_LABELS = [
+        'business_name' => 'Nom', 'phone' => 'Téléphone', 'whatsapp' => 'WhatsApp',
+        'latitude' => 'Position', 'longitude' => 'Position', 'rccm' => 'N° RCCM', 'type' => 'Type d’activité',
+    ];
+
     protected $hidden = ['location'];
 
     protected function casts(): array
@@ -514,6 +525,63 @@ class Provider extends Model
         ActivityLog::record('provider.sensitive_changes', $this, $changes);
 
         return true;
+    }
+
+    /** Les champs vérifiés sont-ils verrouillés pour le prestataire ? */
+    public function locksFields(): bool
+    {
+        return $this->status === ProviderStatus::Approved && feature('lock_approved_fields');
+    }
+
+    /** Demandes de modification en attente : [champ => valeur demandée]. */
+    public function requestedChanges(): array
+    {
+        return collect((array) $this->pending_changes)
+            ->filter(fn ($c) => ! empty($c['demande']))
+            ->map(fn ($c) => $c['après'] ?? null)
+            ->all();
+    }
+
+    /**
+     * Enregistre une demande de modification des champs verrouillés (sans les appliquer).
+     *
+     * @param  array<string, mixed>  $requested  [champ => nouvelle valeur]
+     * @return array<string, mixed> les changements réellement demandés
+     */
+    public function requestChanges(array $requested): array
+    {
+        $changes = [];
+        foreach (array_intersect_key($requested, array_flip(self::LOCKED_FIELDS)) as $field => $value) {
+            $before = $this->getRawOriginal($field);
+            $same = in_array($field, ['latitude', 'longitude'], true)
+                ? $before !== null && $value !== null && abs((float) $before - (float) $value) < 0.0005
+                : (string) $before === (string) $value;
+            if (! $same) {
+                $changes[$field] = ['avant' => $before, 'après' => $value, 'demande' => true];
+            }
+        }
+        // Une position se déplace toujours en entier (latitude et longitude ensemble).
+        if (isset($changes['latitude']) || isset($changes['longitude'])) {
+            foreach (['latitude', 'longitude'] as $axis) {
+                $changes[$axis] ??= ['avant' => $this->getRawOriginal($axis), 'après' => $requested[$axis] ?? $this->getRawOriginal($axis), 'demande' => true];
+            }
+        }
+
+        if ($changes) {
+            $this->forceFill(['needs_review' => true, 'pending_changes' => array_merge((array) $this->pending_changes, $changes)])->saveQuietly();
+            ActivityLog::record('provider.change_requested', $this, collect($changes)->map(fn ($c) => ['avant' => $c['avant'], 'après' => $c['après']])->all());
+        }
+
+        return $changes;
+    }
+
+    /** L'admin applique les modifications demandées par le prestataire. */
+    public function applyRequestedChanges(): array
+    {
+        $applied = $this->requestedChanges();
+        $this->forceFill($applied + ['needs_review' => false, 'pending_changes' => null])->save();
+
+        return $applied;
     }
 
     /** Recalcule la note à partir des seuls avis publiés. */

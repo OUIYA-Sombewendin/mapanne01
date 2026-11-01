@@ -35,13 +35,13 @@
             @case(\App\Enums\ProviderStatus::Pending)
                 <div class="flex gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-900">
                     <span class="text-xl">⏳</span>
-                    <div><p class="font-semibold">Fiche en cours de vérification</p>
+                    <div><p class="font-semibold">Statut : En attente de validation</p>
                         <p class="text-sm">L'équipe {{ setting('site_name') }} vérifie vos informations : la fiche n'apparaît pas encore dans les recherches. Une fiche complète est validée plus vite.</p></div>
                 </div>
                 @break
             @case(\App\Enums\ProviderStatus::Rejected)
                 <div class="rounded-2xl border border-red-200 bg-red-50 p-4 text-red-900">
-                    <p class="font-semibold">Fiche refusée</p>
+                    <p class="font-semibold">Statut : Refusée</p>
                     <p class="mt-1 text-sm"><strong>Motif :</strong> {{ $provider->rejection_reason }}</p>
                     @if ($me->canShop('profile'))
                         <form method="POST" action="{{ route('pro.resubmit') }}" class="mt-3">@csrf
@@ -52,14 +52,14 @@
                 @break
             @case(\App\Enums\ProviderStatus::Suspended)
                 <div class="rounded-2xl border border-ink-200 bg-ink-100 p-4">
-                    <p class="font-semibold">Fiche suspendue</p>
+                    <p class="font-semibold">Statut : Bloquée (suspendue)</p>
                     <p class="mt-1 text-sm text-ink-600">{{ $provider->rejection_reason }} — contactez le support {{ setting('site_name') }}.</p>
                 </div>
                 @break
             @default
                 <div class="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
                     <span class="on-color flex size-6 items-center justify-center rounded-full bg-emerald-600 text-white">✓</span>
-                    <span>La fiche est <strong>vérifiée et visible</strong> par les clients.</span>
+                    <span>Statut : <strong>Approuvée</strong>. La fiche est vérifiée et visible par les clients{{ $provider->approved_at ? ' depuis le '.$provider->approved_at->format('d/m/Y') : '' }}.</span>
                 </div>
         @endswitch
     </div>
@@ -71,6 +71,7 @@
             $kpis['month'] ? ['card', $money($kpis['month']['net']), 'Bénéfice net du mois', 'marge − dépenses', $kpis['month']['net'] >= 0 ? 'bg-gradient-to-br from-emerald-600 to-emerald-800' : 'bg-gradient-to-br from-rose-500 to-rose-700', route('pro.manage.index')] : null,
             ! $kpis['month'] && $kpis['salesToday'] !== null ? ['card', $money($kpis['salesToday']), 'Ventes du jour', 'factures du jour', 'admin-hero', route('pro.manage.invoices.index')] : null,
             $kpis['products'] !== null ? ['cube', $kpis['products'], 'Pièces au catalogue', $kpis['lowStock'].' à réapprovisionner', 'bg-gradient-to-br from-sky-600 to-blue-800', $me->canShop('stock') ? route('pro.manage.stock') : null] : null,
+            $kpis['visits'] ? ['chart', number_format($kpis['visits']['views'], 0, ',', ' '), 'Vues de la fiche (7 jours)', ($kpis['visits']['calls'] + $kpis['visits']['whatsapp'] + $kpis['visits']['directions']).' contact(s) · '.$kpis['visits']['directions'].' itinéraire(s)', 'bg-gradient-to-br from-violet-600 to-indigo-800', $provider->hasPlanFeature('statistics') ? route('pro.stats') : null] : null,
             ['star', number_format($provider->rating_avg, 1, ',', ''), 'Note moyenne', $provider->reviews_count.' avis · '.$favoritesCount.' favoris', 'bg-gradient-to-br from-amber-500 to-orange-700', null],
         ]));
     @endphp

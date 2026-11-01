@@ -144,34 +144,46 @@ Alpine.data('locationSelect', (cities, cityId, neighborhoodId) => ({
 }));
 
 /* Placement de l'établissement sur la carte (espace prestataire). */
-Alpine.data('locationPicker', (lat, lng) => ({
+// Placer un point, comme pour partager une position sur WhatsApp : « je suis sur place », chercher un lieu,
+// coller un lien Google Maps, ou toucher la carte. locked : position validée, modifiable seulement après unlock().
+Alpine.data('locationPicker', (lat, lng, locked = false) => ({
     lat,
     lng,
+    locked,
     error: '',
     loading: false,
+    query: '',
+    results: [],
+    searching: false,
     async init() {
         const L = await loadLeaflet();
         const start = lat && lng ? [lat, lng] : [12.3714, -1.5197];
         // Carte et épingle hors de l'état Alpine (voir resultsMap).
         const map = L.map(this.$refs.map).setView(start, lat ? 16 : 12);
         tiles(L).addTo(map);
-        const marker = L.marker(start, { draggable: true, icon: pin(L, '📍') }).addTo(map);
+        const marker = L.marker(start, { draggable: !locked, icon: pin(L, '📍') }).addTo(map);
 
         const set = (p, move = false) => {
-            this.lat = Number(p.lat.toFixed(7));
-            this.lng = Number(p.lng.toFixed(7));
+            if (this.locked) return;
+            this.lat = Number(Number(p.lat).toFixed(7));
+            this.lng = Number(Number(p.lng).toFixed(7));
             if (move) marker.setLatLng([this.lat, this.lng]);
         };
         marker.on('dragend', () => set(marker.getLatLng()));
         map.on('click', (e) => set(e.latlng, true));
 
         this.moveTo = (point, zoom = 15) => {
-            if (!point) return;
+            if (!point || this.locked) return;
             set(point, true);
             map.setView([point.lat, point.lng], zoom);
         };
+        this.unlock = () => {
+            this.locked = false;
+            marker.dragging.enable();
+        };
     },
     moveTo() {},
+    unlock() {},
     async useMyPosition() {
         this.loading = true;
         this.error = '';
@@ -181,6 +193,40 @@ Alpine.data('locationPicker', (lat, lng) => ({
             this.error = e.message;
         }
         this.loading = false;
+    },
+    // Recherche d'un lieu (nom, quartier, repère) ou lecture d'un lien collé.
+    async search() {
+        const q = this.query.trim();
+        if (q.length < 3) return;
+        this.error = '';
+        this.results = [];
+        this.searching = true;
+        try {
+            const csrf = document.querySelector('meta[name=csrf-token]').content;
+            const isLink = /^https?:\/\//i.test(q);
+            const response = isLink
+                ? await fetch('/localisation/lien', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': csrf }, body: JSON.stringify({ link: q }) })
+                : await fetch('/localisation/chercher?q=' + encodeURIComponent(q), { headers: { Accept: 'application/json' } });
+            const data = await response.json();
+            if (!response.ok) {
+                this.error = data.message || 'Recherche impossible.';
+            } else if (isLink) {
+                this.moveTo(data, 17);
+                this.query = '';
+            } else if (!data.length) {
+                this.error = 'Aucun lieu trouvé. Essayez un repère connu ou déplacez l\'épingle.';
+            } else {
+                this.results = data;
+            }
+        } catch {
+            this.error = 'Recherche impossible : vérifiez votre connexion.';
+        }
+        this.searching = false;
+    },
+    pick(result) {
+        this.moveTo(result, 17);
+        this.results = [];
+        this.query = '';
     },
 }));
 

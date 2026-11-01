@@ -9,6 +9,7 @@ use App\Support\Permissions;
 use App\Support\Theme;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -28,7 +29,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Les demandes de dépannage sont identifiées par un jeton UUID : un lien mal formé donne une 404.
-        \Illuminate\Support\Facades\Route::pattern('assist', '[0-9a-fA-F-]{36}');
+        Route::pattern('assist', '[0-9a-fA-F-]{36}');
 
         // Serveur d'emails configurable depuis l'admin.
         MailConfigurator::apply();

@@ -25,7 +25,7 @@ class ProviderController extends Controller
         // Une vue par visiteur et par jour (session + adresse IP) : statistique du prestataire.
         if ($provider->isVisible() && ! $isOwner && ! $request->session()->has('pviewed:'.$provider->id)
             && RateLimiter::attempt('pview:'.$provider->id.':'.$request->ip(), 1, fn () => true, 86400)) {
-            ProviderStats::hit($provider, 'views');
+            ProviderStats::hit($provider, 'views', ProviderStats::sourceOf($request));
             $request->session()->put('pviewed:'.$provider->id, true);
         }
 
@@ -50,13 +50,17 @@ class ProviderController extends Controller
     }
 
     /**
-     * Compte un appel ou un message WhatsApp (envoyé en arrière-plan par navigator.sendBeacon :
+     * Compte un appel, un message WhatsApp ou un clic « Itinéraire » (envoyé en arrière-plan par navigator.sendBeacon :
      * les liens tel:/wa.me restent directs). Un comptage par visiteur, par canal et par jour.
      */
     public function contact(Request $request, Provider $provider): Response
     {
         abort_unless($provider->isVisible(), 404);
-        $channel = $request->input('channel') === 'whatsapp' ? 'whatsapp' : 'calls';
+        $channel = match ($request->input('channel')) {
+            'whatsapp' => 'whatsapp',
+            'directions' => 'directions',
+            default => 'calls',
+        };
 
         $key = 'pcontact:'.$provider->id.':'.$channel;
         if (! $request->session()->has($key) && RateLimiter::attempt($key.':'.$request->ip(), 1, fn () => true, 86400)) {

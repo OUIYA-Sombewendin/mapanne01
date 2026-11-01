@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\PartCategory;
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -23,7 +24,7 @@ class PriceWatch
             ->when($filters['city'] ?? null, fn ($q, $city) => $q->whereHas('provider', fn ($p) => $p->where('city_id', $city)))
             ->when($filters['vehicle'] ?? null, fn ($q, $v) => $q->whereJsonContains('products.vehicle_types', $v))
             ->when($filters['condition'] ?? null, fn ($q, $c) => $q->where('products.condition', $c))
-            ->when($filters['category'] ?? null, fn ($q, $c) => $q->whereIn('products.part_category_id', \App\Models\PartCategory::familyIdsOf($c)))
+            ->when($filters['category'] ?? null, fn ($q, $c) => $q->whereIn('products.part_category_id', PartCategory::familyIdsOf($c)))
             ->when(trim((string) ($filters['q'] ?? '')) !== '', fn ($q) => $q->where(fn ($w) => $w
                 ->where('products.name', 'ilike', Listing::like(trim($filters['q'])))
                 ->orWhere('products.reference', 'ilike', Listing::like(trim($filters['q'])))));

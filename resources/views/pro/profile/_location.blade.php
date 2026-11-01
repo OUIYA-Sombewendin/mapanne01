@@ -1,6 +1,6 @@
 {{-- Adresse, carte et service de nuit. Paramètres : $id, $title, $text, $copy, $detailFields (champs métier à afficher ici). --}}
 <section id="{{ $id ?? 'localisation' }}" class="card scroll-mt-28 p-6"
-         x-data="locationPicker({{ old('latitude', $provider->latitude) ?? 'null' }}, {{ old('longitude', $provider->longitude) ?? 'null' }})"
+         x-data="locationPicker({{ old('latitude', $provider->latitude) ?? 'null' }}, {{ old('longitude', $provider->longitude) ?? 'null' }}, {{ $provider->locksFields() && $provider->latitude ? 'true' : 'false' }})"
          @location-changed="moveTo($event.detail)">
     @include('pro._section-head', ['icon' => 'map', 'title' => $title, 'text' => $text ?? $copy['place']])
     <div class="grid gap-4 sm:grid-cols-2">
@@ -8,12 +8,18 @@
         <div class="sm:col-span-2"><x-field name="address" label="Adresse / repère" :value="$provider->address" placeholder="Ex. face à la pharmacie du Progrès" /></div>
     </div>
     <div class="mt-4">
-        <div class="mb-1 flex items-center justify-between">
+        <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
             <span class="field-label mb-0">Position exacte</span>
-            <button type="button" @click="useMyPosition()" :disabled="loading" class="btn btn-ghost btn-sm" x-text="loading ? 'Localisation…' : '📍 Je suis sur place'"></button>
+            <button type="button" x-show="locked" x-cloak @click="unlock()" class="text-xs font-semibold text-accent-700 hover:underline">🔒 Position vérifiée · demander un déplacement</button>
         </div>
+        <x-map-tools />
         <div x-ref="map" class="h-80 overflow-hidden rounded-xl ring-1 ring-ink-100"></div>
-        <p class="mt-1 text-xs text-ink-400">Touchez la carte ou déplacez l'épingle.</p>
+        @if ($provider->locksFields())
+            @if (array_key_exists('latitude', $provider->requestedChanges()))
+                <p class="mt-1 text-xs font-medium text-amber-700">⏳ Un déplacement de la position est en attente de vérification par l’équipe.</p>
+            @endif
+            <p x-show="!locked" x-cloak class="mt-1 text-xs text-ink-500">La nouvelle position sera appliquée après vérification par l’équipe.</p>
+        @endif
         <p x-cloak x-show="error" x-text="error" class="field-error"></p>
         @error('latitude') <p class="field-error">{{ $message }}</p> @enderror
         <input type="hidden" name="latitude" :value="lat">

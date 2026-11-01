@@ -7,7 +7,7 @@ use App\Support\ProviderStats;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
-/** Ce que MaPanne apporte à la fiche : vues, appels, WhatsApp, dépannages, avis, ce mois-ci et le précédent. */
+/** Ce que MaPanne apporte à la fiche : vues (et d'où elles viennent), appels, WhatsApp, itinéraires, heures de visite, dépannages, avis. */
 class StatsController extends Controller
 {
     public function index(Request $request): View
@@ -25,6 +25,9 @@ class StatsController extends Controller
             'current' => ProviderStats::totals($provider, $from, $to),
             'previous' => ProviderStats::totals($provider, $from->copy()->subDays($days), $from),
             'series' => ProviderStats::daily($provider, $days),
+            'sources' => ProviderStats::sources($provider, $from, $to),
+            'hours' => ProviderStats::hours($provider, $from, $to),
+            'weekdays' => ProviderStats::weekdays($provider, $from, $to),
             'products' => $provider->canSellParts()
                 ? $provider->products()->orderByDesc('views_count')->take(5)->get(['id', 'name', 'slug', 'views_count', 'contacts_count'])
                 : collect(),

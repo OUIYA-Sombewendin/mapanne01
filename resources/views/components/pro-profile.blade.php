@@ -83,7 +83,9 @@
             {{-- Barre d'enregistrement --}}
             <div class="sticky bottom-4 z-20">
                 <div class="card flex flex-wrap items-center justify-between gap-3 px-5 py-3 shadow-lg">
-                    <p class="text-sm text-ink-500">Un changement de nom, de téléphone ou de position d'une fiche validée est vérifié par l'équipe.</p>
+                    <p class="text-sm text-ink-500">{{ $provider->locksFields()
+                        ? '🔒 Le nom, le téléphone, la position et le RCCM sont vérifiés : un changement devient une demande, appliquée après accord de l’équipe.'
+                        : 'Un changement de nom, de téléphone ou de position d\'une fiche validée est vérifié par l\'équipe.' }}</p>
                     <button form="profile-form" class="btn btn-primary px-6 py-3">Enregistrer</button>
                 </div>
             </div>

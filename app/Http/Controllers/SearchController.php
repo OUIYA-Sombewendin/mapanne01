@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\VehicleType;
 use App\Models\City;
 use App\Models\Provider;
 use App\Models\ProviderType;
@@ -24,7 +25,7 @@ class SearchController extends Controller
             'lng' => $p->longitude,
             'name' => $p->business_name,
             'icon' => $p->type->icon(),
-            'url' => route('providers.show', $p),
+            'url' => route('providers.show', [$p, 'src' => 'map']), // provenance « carte » dans les statistiques
             'meta' => trim(($p->distanceLabel() ? $p->distanceLabel().' · ' : '').$p->type->shortLabel()),
             'open' => $p->isOpenAt($now),
         ])->filter(fn ($m) => $m['lat'] !== null)->values();
@@ -33,7 +34,7 @@ class SearchController extends Controller
             'providers' => $providers,
             'filters' => $search->filters,
             'understood' => $search->understood,
-            'vehicles' => \App\Enums\VehicleType::options(),
+            'vehicles' => VehicleType::options(),
             'center' => $search->center ?? ['lat' => (float) setting('map_default_lat'), 'lng' => (float) setting('map_default_lng'), 'label' => null],
             'hasCenter' => $search->center !== null,
             'markers' => $markers,

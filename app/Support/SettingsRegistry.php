@@ -60,6 +60,7 @@ class SettingsRegistry
                 'settings' => [
                     'max_photos' => ['type' => 'int', 'label' => 'Photos max. par fiche', 'default' => 6],
                     'max_image_kb' => ['type' => 'int', 'label' => 'Taille max. d\'une image (Ko)', 'default' => 2048],
+                    'lock_approved_fields' => ['type' => 'bool', 'label' => 'Verrouiller le nom, le téléphone, la position et le RCCM d’une fiche validée (le prestataire fait une demande de modification)', 'default' => true],
                     'sensitive_changes_review' => ['type' => 'bool', 'label' => 'Signaler à l\'admin les changements sensibles d\'une fiche validée (nom, téléphone, position, type)', 'default' => true],
                     'sensitive_changes_unpublish' => ['type' => 'bool', 'label' => '… et dépublier la fiche jusqu\'à nouvelle validation', 'default' => false],
                 ],

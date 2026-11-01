@@ -2,10 +2,14 @@
 
 use App\Models\ActivityLog;
 use App\Models\Subscription;
+use App\Models\VehicleReminder;
+use App\Notifications\MaintenanceDue;
 use App\Notifications\SimpleMessage;
+use App\Support\AssistDispatch;
 use App\Support\Backup;
 use App\Support\Notifier;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schedule;
 
 /*
@@ -61,7 +65,7 @@ Artisan::command('mapanne:backup {--force : Sauvegarder même si l\'option autom
 })->purpose('Crée une sauvegarde complète (base + fichiers)');
 
 Artisan::command('mapanne:assist-expire', function () {
-    $this->info(\App\Support\AssistDispatch::expireStale().' demande(s) de dépannage fermée(s) sans réponse.');
+    $this->info(AssistDispatch::expireStale().' demande(s) de dépannage fermée(s) sans réponse.');
 })->purpose('Ferme les demandes de dépannage restées sans réponse');
 
 // Carnet d'entretien : un seul message par client, une seule fois par échéance.
@@ -72,15 +76,15 @@ Artisan::command('mapanne:maintenance-reminders', function () {
         return;
     }
     $sent = 0;
-    \App\Models\VehicleReminder::query()
-        ->where('next_due_on', '<=', today()->addDays(\App\Models\VehicleReminder::NOTICE_DAYS))
+    VehicleReminder::query()
+        ->where('next_due_on', '<=', today()->addDays(VehicleReminder::NOTICE_DAYS))
         ->where(fn ($q) => $q->whereNull('notified_for')->orWhereColumn('notified_for', '!=', 'next_due_on'))
         ->with('vehicle.user')
         ->get()
         ->groupBy(fn ($r) => $r->vehicle->user_id)
         ->each(function ($reminders) use (&$sent) {
-            Notifier::send($reminders->first()->vehicle->user, new \App\Notifications\MaintenanceDue($reminders->sortBy('next_due_on')->values()));
-            \App\Models\VehicleReminder::whereKey($reminders->modelKeys())->update(['notified_for' => \Illuminate\Support\Facades\DB::raw('next_due_on')]);
+            Notifier::send($reminders->first()->vehicle->user, new MaintenanceDue($reminders->sortBy('next_due_on')->values()));
+            VehicleReminder::whereKey($reminders->modelKeys())->update(['notified_for' => DB::raw('next_due_on')]);
             $sent++;
         });
     $this->info("$sent client(s) prévenu(s).");

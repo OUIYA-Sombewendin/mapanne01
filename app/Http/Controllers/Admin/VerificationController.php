@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\ProviderDocument;
+use App\Models\ProviderType;
 use App\Notifications\SimpleMessage;
 use App\Support\Listing;
 use App\Support\Notifier;
@@ -34,7 +35,7 @@ class VerificationController extends Controller
             'status' => $status,
             'counts' => ProviderDocument::selectRaw('status, COUNT(*) AS n')->groupBy('status')->pluck('n', 'status'),
             'kinds' => ProviderDocument::KINDS,
-            'types' => \App\Models\ProviderType::cached()->values(),
+            'types' => ProviderType::cached()->values(),
         ]);
     }
 

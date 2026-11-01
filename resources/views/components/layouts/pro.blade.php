@@ -42,6 +42,10 @@
         return $items;
     });
     $alertCount = array_sum(array_map(fn ($a) => $a[1] ?? 1, $alerts));
+    // Messages de l'équipe (validation de la fiche, demandes de modification) non lus.
+    $unread = $me->unreadNotifications()->latest()->take(5)->get();
+    $unreadCount = $unread->count() < 5 ? $unread->count() : $me->unreadNotifications()->count();
+    $bellCount = $alertCount + $unreadCount;
 
     $is = fn (...$patterns) => request()->routeIs(...$patterns);
     $sections = [
@@ -173,11 +177,23 @@
                     <div class="relative" x-data="{ open: false }">
                         <button @click="open = !open" @click.outside="open = false" class="relative flex size-11 items-center justify-center rounded-xl border border-ink-100 text-ink-600 hover:bg-ink-50" aria-label="Notifications">
                             <x-icon name="bell" />
-                            @if ($alertCount)
-                                <span class="on-color absolute -top-1 -right-1 min-w-5 rounded-full bg-brand-500 px-1 text-center text-[11px] leading-5 font-bold text-white">{{ $alertCount > 99 ? '99+' : $alertCount }}</span>
+                            @if ($bellCount)
+                                <span class="on-color absolute -top-1 -right-1 min-w-5 rounded-full bg-brand-500 px-1 text-center text-[11px] leading-5 font-bold text-white">{{ $bellCount > 99 ? '99+' : $bellCount }}</span>
                             @endif
                         </button>
-                        <div x-cloak x-show="open" x-transition.origin.top.right class="absolute right-0 mt-2 w-72 overflow-hidden rounded-2xl bg-white text-sm shadow-xl ring-1 ring-ink-100">
+                        <div x-cloak x-show="open" x-transition.origin.top.right class="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl bg-white text-sm shadow-xl ring-1 ring-ink-100">
+                            @if ($unread->isNotEmpty())
+                                <div class="flex items-center justify-between border-b border-ink-50 px-4 py-3">
+                                    <p class="font-semibold">Messages de l’équipe</p>
+                                    <form method="POST" action="{{ route('notifications.read-all') }}">@csrf<button class="text-xs text-accent-700 hover:underline">Tout marquer comme lu</button></form>
+                                </div>
+                                @foreach ($unread as $n)
+                                    <a href="{{ route('notifications.open', $n->id) }}" class="flex gap-2 bg-accent-50/50 px-4 py-2.5 hover:bg-ink-50">
+                                        <span>{{ $n->data['icon'] ?? '🔔' }}</span>
+                                        <span class="min-w-0"><span class="block font-semibold">{{ $n->data['title'] ?? 'Notification' }}</span><span class="block text-xs text-ink-500">{{ $n->data['body'] ?? '' }}</span><span class="block text-[11px] text-ink-400">{{ $n->created_at->diffForHumans() }}</span></span>
+                                    </a>
+                                @endforeach
+                            @endif
                             <p class="border-b border-ink-50 px-4 py-3 font-semibold">À traiter</p>
                             @forelse ($alerts as [$label, $count, $url])
                                 <a href="{{ $url }}" class="flex items-center justify-between px-4 py-2.5 hover:bg-ink-50"><span>{{ $label }}</span>@if ($count)<span class="on-color rounded-full bg-brand-500 px-2 text-xs font-bold text-white">{{ $count }}</span>@endif</a>
@@ -209,6 +225,31 @@
             </header>
 
             <main class="px-4 py-6 lg:px-8 lg:py-8">
+                {{-- Statut de la fiche, visible sur toutes les pages (le tableau de bord donne le détail) --}}
+                @unless (request()->routeIs('pro.dashboard'))
+                    @switch($provider->status)
+                        @case(\App\Enums\ProviderStatus::Pending)
+                            <a href="{{ route('pro.dashboard') }}" class="mb-4 flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                                <span class="text-lg">⏳</span><span class="flex-1"><strong>En attente de validation</strong> : votre fiche n’apparaît pas encore aux clients. L’équipe vous prévient dès qu’elle est validée.</span><span class="font-semibold">Voir →</span>
+                            </a>
+                            @break
+                        @case(\App\Enums\ProviderStatus::Rejected)
+                            <a href="{{ route('pro.dashboard') }}" class="mb-4 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
+                                <span class="text-lg">✋</span><span class="flex-1"><strong>Fiche refusée</strong> : {{ \Illuminate\Support\Str::limit($provider->rejection_reason, 120) }}</span><span class="font-semibold">Corriger →</span>
+                            </a>
+                            @break
+                        @case(\App\Enums\ProviderStatus::Suspended)
+                            <div class="mb-4 flex items-center gap-3 rounded-xl border border-ink-200 bg-ink-100 px-4 py-3 text-sm">
+                                <span class="text-lg">⛔</span><span class="flex-1"><strong>Fiche bloquée</strong> : elle n’apparaît plus aux clients. {{ $provider->rejection_reason }} · Support : {{ setting('support_email') }}</span>
+                            </div>
+                            @break
+                    @endswitch
+                @endunless
+                @if ($provider->requestedChanges() && $me->canShop('profile'))
+                    <a href="{{ route('pro.profile') }}" class="mb-4 flex items-center gap-3 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm text-accent-900">
+                        <span class="text-lg">📝</span><span class="flex-1">Votre demande de modification de la fiche est en cours de vérification par l’équipe.</span>
+                    </a>
+                @endif
                 @if (session('success'))
                     <div class="on-color mb-4 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-medium text-white">{{ session('success') }}</div>
                 @endif

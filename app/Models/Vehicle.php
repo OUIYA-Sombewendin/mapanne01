@@ -7,6 +7,7 @@ use App\Support\MaintenanceTasks;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /** Véhicule d'un client, avec son carnet d'entretien (rappels et historique). */
 class Vehicle extends Model
@@ -79,7 +80,7 @@ class Vehicle extends Model
         }
         $reminder->update([
             'last_done_on' => $doneOn,
-            'next_due_on' => \Illuminate\Support\Carbon::parse($doneOn)->addMonthsNoOverflow($reminder->every_months),
+            'next_due_on' => Carbon::parse($doneOn)->addMonthsNoOverflow($reminder->every_months),
             'notified_for' => null,
         ]);
     }

@@ -10,6 +10,7 @@ use App\Models\ProfileField;
 use App\Models\Provider;
 use App\Models\ProviderType;
 use App\Models\Service;
+use App\Notifications\ProviderChangesReviewed;
 use App\Notifications\ProviderDecision;
 use App\Rules\BurkinaPhone;
 use App\Support\Listing;
@@ -217,13 +218,39 @@ class ProviderController extends Controller
         return back()->with('success', 'Prestataire réactivé.');
     }
 
-    /** Les changements sensibles signalés ont été vérifiés. */
-    public function markReviewed(Provider $provider): RedirectResponse
+    /** Les changements sensibles signalés ont été vérifiés (ou la demande de modification est refusée). */
+    public function markReviewed(Request $request, Provider $provider): RedirectResponse
     {
+        $requested = $provider->requestedChanges();
+        $reason = $request->validate(['reason' => ['nullable', 'string', 'max:500']])['reason'] ?? null;
         $provider->forceFill(['needs_review' => false, 'pending_changes' => null])->save();
+
+        if ($requested) {
+            ActivityLog::record('provider.changes_refused', $provider, ['champs' => array_keys($requested), 'motif' => $reason]);
+            Notifier::send($provider->user, new ProviderChangesReviewed($provider, false, $this->labels($requested), $reason));
+
+            return back()->with('success', 'Demande de modification refusée : le prestataire est prévenu.');
+        }
         ActivityLog::record('provider.changes_reviewed', $provider);
 
         return back()->with('success', 'Changements marqués comme vérifiés.');
+    }
+
+    /** Applique les modifications demandées par le prestataire sur sa fiche validée. */
+    public function applyChanges(Provider $provider): RedirectResponse
+    {
+        $applied = $provider->applyRequestedChanges();
+        abort_if($applied === [], 422);
+        ActivityLog::record('provider.changes_applied', $provider, $applied);
+        Notifier::send($provider->user, new ProviderChangesReviewed($provider, true, $this->labels($applied)));
+
+        return back()->with('success', 'Modifications appliquées sur la fiche : le prestataire est prévenu.');
+    }
+
+    /** @return list<string> */
+    private function labels(array $changes): array
+    {
+        return collect(array_keys($changes))->map(fn ($f) => Provider::LOCKED_LABELS[$f] ?? $f)->unique()->values()->all();
     }
 
     public function toggleFeatured(Provider $provider): RedirectResponse
@@ -236,7 +263,18 @@ class ProviderController extends Controller
 
     private function notify(Provider $provider): void
     {
-        Notifier::send($provider->user, new ProviderDecision($provider), 'notify_provider_decision');
+        $notification = new ProviderDecision($provider);
+        if (feature('notify_provider_decision')) {
+            Notifier::send($provider->user, $notification);
+
+            return;
+        }
+        // Emails de décision désactivés : la décision reste visible dans la cloche de l'espace pro.
+        try {
+            $provider->user->notifyNow($notification, ['database']);
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 
     /** @return list<array{ok: bool|null, label: string}> null = avertissement */

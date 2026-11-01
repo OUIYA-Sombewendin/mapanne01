@@ -6,6 +6,7 @@ use App\Enums\Availability;
 use App\Enums\ProviderStatus;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
+use App\Support\ProviderStats;
 use App\Support\ShopReport;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -34,6 +35,8 @@ class DashboardController extends Controller
             'lowStock' => $sells ? $provider->products()->where('on_order', false)->whereRaw('stock <= COALESCE(stock_alert, 0)')->count() : null,
             'views' => $sells ? (int) $provider->products()->sum('views_count') : null,
             'contacts' => $sells ? (int) $provider->products()->sum('contacts_count') : null,
+            // Visites de la fiche sur 7 jours (vues, appels, WhatsApp, itinéraires).
+            'visits' => $user->canShop('stats') ? ProviderStats::totals($provider, now()->subDays(6)->startOfDay(), now()->addDay()->startOfDay()) : null,
         ];
 
         return view('pro.dashboard', [

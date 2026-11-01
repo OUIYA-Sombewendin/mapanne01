@@ -15,19 +15,36 @@
     </div>
 
     @if ($provider->needs_review)
+        @php($asked = $provider->requestedChanges())
         <section class="mb-5 rounded-2xl border border-amber-300 bg-amber-50 p-4">
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                    <p class="font-semibold text-amber-900">Changements sensibles faits par le prestataire</p>
+                    <p class="font-semibold text-amber-900">{{ $asked ? 'Demande de modification du prestataire (pas encore appliquée)' : 'Changements sensibles faits par le prestataire' }}</p>
                     <ul class="mt-2 space-y-1 text-sm text-amber-900">
                         @foreach ((array) $provider->pending_changes as $field => $change)
-                            <li><strong>{{ $field }}</strong> : « {{ $change['avant'] ?? '—' }} » → « {{ $change['après'] ?? '—' }} »</li>
+                            <li><strong>{{ \App\Models\Provider::LOCKED_LABELS[$field] ?? $field }}</strong> : « {{ $change['avant'] ?? '—' }} » → « {{ $change['après'] ?? '—' }} »</li>
                         @endforeach
                     </ul>
+                    @if (isset($asked['latitude']))
+                        <a href="https://www.openstreetmap.org/?mlat={{ $asked['latitude'] }}&mlon={{ $asked['longitude'] }}#map=18/{{ $asked['latitude'] }}/{{ $asked['longitude'] }}" target="_blank" rel="noopener" class="mt-2 inline-block text-sm font-semibold text-accent-700 underline">Voir la nouvelle position sur la carte</a>
+                    @endif
                 </div>
-                <form method="POST" action="{{ route('admin.providers.reviewed', $provider) }}">@csrf
-                    <button class="btn btn-dark btn-sm">✓ Changements vérifiés</button>
-                </form>
+                @if ($asked)
+                    <div class="flex flex-col gap-2" x-data="{ refuse: false }">
+                        <form method="POST" action="{{ route('admin.providers.apply-changes', $provider) }}">@csrf
+                            <button class="btn btn-primary btn-sm w-full">✓ Appliquer les modifications</button>
+                        </form>
+                        <button type="button" @click="refuse = !refuse" class="btn btn-ghost btn-sm">Refuser…</button>
+                        <form x-show="refuse" x-cloak method="POST" action="{{ route('admin.providers.reviewed', $provider) }}" class="space-y-2">@csrf
+                            <input name="reason" class="input" placeholder="Motif (envoyé au prestataire)" maxlength="500">
+                            <button class="btn btn-danger btn-sm w-full">Refuser la demande</button>
+                        </form>
+                    </div>
+                @else
+                    <form method="POST" action="{{ route('admin.providers.reviewed', $provider) }}">@csrf
+                        <button class="btn btn-dark btn-sm">✓ Changements vérifiés</button>
+                    </form>
+                @endif
             </div>
         </section>
     @endif

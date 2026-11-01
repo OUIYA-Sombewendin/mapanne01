@@ -8,7 +8,10 @@
         Entreprise enregistrée (RCCM)
     </label>
     <div x-show="formal" x-cloak class="mt-4 grid gap-4 sm:grid-cols-2">
-        <x-field name="rccm" label="N° RCCM" :value="$provider->rccm" placeholder="BF-OUA-…" />
+        <div x-data="{ edit: {{ $provider->locksFields() ? 'false' : 'true' }} }" >
+            <x-field name="rccm" label="N° RCCM" :value="$provider->rccm" placeholder="BF-OUA-…" :readonly="$provider->locksFields()" x-bind:readonly="!edit" />
+            @include('pro.profile._lock-note', ['field' => 'rccm'])
+        </div>
         <x-field name="ifu" label="N° IFU" :value="$provider->ifu" />
     </div>
 </section>

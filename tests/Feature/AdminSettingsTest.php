@@ -171,6 +171,7 @@ class AdminSettingsTest extends TestCase
 
     public function test_sensitive_changes_are_flagged_and_can_unpublish(): void
     {
+        Setting::store(['lock_approved_fields' => false]); // ancien mode : appliqué tout de suite puis signalé
         $provider = Provider::factory()->approved()->create(['city_id' => null]);
         $city = City::create(['name' => 'Ouagadougou', 'slug' => 'ouaga', 'latitude' => 12.37, 'longitude' => -1.52]);
         $payload = fn (array $over = []) => $over + [

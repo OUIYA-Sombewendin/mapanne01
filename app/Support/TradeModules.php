@@ -43,7 +43,8 @@ class TradeModules
         return match ($kind) {
             'shop' => ['services', 'catalog', 'requests', 'stock', 'invoices', 'expenses', 'reports', 'team', 'shops'],
             'garage' => ['services', 'assist', 'invoices', 'expenses', 'reports', 'team'],
-            'station' => ['services', 'invoices', 'expenses', 'reports', 'team', 'shops'],
+            // Une station ne gère pas ses ventes ici : elle mise sur sa fiche et ses statistiques de visite.
+            'station' => ['services', 'team', 'shops'],
             'mechanic', 'tow' => ['services', 'assist', 'invoices', 'expenses', 'reports'],
             default => ['services'],
         };

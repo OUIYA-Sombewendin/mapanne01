@@ -65,12 +65,10 @@
                 </div>
                 <x-field name="notes" label="Note (prix, marque de batterie…)" :value="$p?->notes" />
                 <div>
-                    <div class="mb-1 flex items-center justify-between">
-                        <span class="field-label mb-0">Position</span>
-                        <button type="button" @click="useMyPosition()" :disabled="loading" class="btn btn-ghost btn-sm" x-text="loading ? 'Localisation…' : '📍 Je suis sur place'"></button>
-                    </div>
+                    <span class="field-label">Position</span>
+                    <x-map-tools />
                     <div x-ref="map" class="h-64 overflow-hidden rounded-xl ring-1 ring-ink-100"></div>
-                    <p class="mt-1 text-xs text-ink-400">Touchez la carte ou déplacez l'épingle.</p>
+                    <p x-cloak x-show="error" x-text="error" class="field-error"></p>
                     @error('latitude') <p class="field-error">{{ $message }}</p> @enderror
                     <input type="hidden" name="latitude" :value="lat">
                     <input type="hidden" name="longitude" :value="lng">

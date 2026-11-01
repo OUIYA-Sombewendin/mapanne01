@@ -7,8 +7,10 @@ use App\Models\City;
 use App\Models\ProfileField;
 use App\Models\Provider;
 use App\Models\Service;
+use App\Notifications\SimpleMessage;
 use App\Rules\BurkinaPhone;
 use App\Support\ImageOptimizer;
+use App\Support\Notifier;
 use App\Support\Phone;
 use App\Support\ProviderProfiles;
 use Illuminate\Database\Eloquent\Collection;
@@ -85,6 +87,18 @@ class ProfileController extends Controller
             'services.*.in' => 'Ce service ne correspond pas à votre métier.',
         ]);
 
+        // Fiche validée : les champs vérifiés (nom, téléphone, position, RCCM) ne changent plus directement,
+        // ils deviennent une demande que l'équipe applique ou refuse.
+        $requested = [];
+        if ($provider->locksFields()) {
+            foreach (Provider::LOCKED_FIELDS as $field) {
+                if (array_key_exists($field, $data)) {
+                    $requested[$field] = $data[$field];
+                    unset($data[$field]);
+                }
+            }
+        }
+
         // Valeurs avant modification, pour repérer les changements sensibles d'une fiche validée.
         $original = collect(Provider::SENSITIVE_FIELDS)->mapWithKeys(fn ($f) => [$f => $provider->getRawOriginal($f)])->all();
 
@@ -108,6 +122,16 @@ class ProfileController extends Controller
         }
         if ($kind && $request->has('details.'.$kind)) {
             $provider->saveDetails((array) $request->input('details.'.$kind));
+        }
+
+        if ($requested && $changes = $provider->requestChanges($requested)) {
+            $labels = collect(array_keys($changes))->map(fn ($f) => Provider::LOCKED_LABELS[$f] ?? $f)->unique()->implode(', ');
+            Notifier::sendTo(setting('admin_notification_email'), new SimpleMessage(
+                'Demande de modification : '.$provider->business_name,
+                ['Le prestataire demande à modifier : '.$labels.'.', 'À vérifier dans l\'administration, fiche « '.$provider->business_name.' ».'],
+            ));
+
+            return back()->with('success', 'Fiche enregistrée. Votre demande de modification ('.$labels.') a été transmise à l\'équipe : elle sera appliquée après vérification.');
         }
 
         if ($provider->flagSensitiveChanges($original)) {

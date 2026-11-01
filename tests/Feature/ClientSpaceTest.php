@@ -21,7 +21,7 @@ class ClientSpaceTest extends TestCase
         // Après connexion, et même en revenant sur l'accueil, le client arrive sur son tableau de bord.
         $this->post('/connexion', ['login' => $client->email, 'password' => 'password'])->assertRedirect('/mon-espace');
         $this->get('/')->assertRedirect('/mon-espace');
-        $this->get('/mon-espace')->assertOk()->assertSee('Bonjour Awa')->assertSee('Mes dépannages')->assertSee('Profil et sécurité');
+        $this->get('/mon-espace')->assertOk()->assertSee('Awa 👋')->assertSee('Mes dépannages')->assertSee('Profil et sécurité');
 
         // Les pages publiques s'affichent dans le même cadre (menu de l'espace client).
         $this->get('/recherche')->assertOk()->assertSee('Tableau de bord')->assertSee('Mes favoris');

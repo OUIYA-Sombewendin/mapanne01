@@ -5,8 +5,9 @@
 <section id="{{ $id ?? 'identite' }}" class="card scroll-mt-28 p-6">
     @include('pro._section-head', ['icon' => 'document', 'title' => $title, 'text' => $text ?? ''])
     <div class="grid gap-4 sm:grid-cols-2">
-        <div class="sm:col-span-2">
-            <x-field name="business_name" :label="$copy['name']" :value="$provider->business_name" required :placeholder="$copy['name_hint']" />
+        <div class="sm:col-span-2" x-data="{ edit: {{ $provider->locksFields() ? 'false' : 'true' }} }" >
+            <x-field name="business_name" :label="$copy['name']" :value="$provider->business_name" required :placeholder="$copy['name_hint']" :readonly="$provider->locksFields()" x-bind:readonly="!edit" />
+            @include('pro.profile._lock-note', ['field' => 'business_name'])
         </div>
         @if (! empty($detailFields))
             <div class="sm:col-span-2"><x-type-details-form :provider="$provider" :title="false" :only="$detailFields" /></div>
@@ -25,7 +26,13 @@
         <div class="sm:col-span-2">
             <x-field name="description" type="textarea" label="Présentation" :value="$provider->description" :placeholder="$copy['about']" />
         </div>
-        <x-field name="phone" type="tel" :label="$phoneLabel ?? 'Téléphone (appels)'" :value="$provider->phone" required />
-        <x-field name="whatsapp" type="tel" label="WhatsApp" :value="$provider->whatsapp" hint="Laisser vide si c'est le même numéro." />
+        <div x-data="{ edit: {{ $provider->locksFields() ? 'false' : 'true' }} }" >
+            <x-field name="phone" type="tel" :label="$phoneLabel ?? 'Téléphone (appels)'" :value="$provider->phone" required :readonly="$provider->locksFields()" x-bind:readonly="!edit" />
+            @include('pro.profile._lock-note', ['field' => 'phone'])
+        </div>
+        <div x-data="{ edit: {{ $provider->locksFields() ? 'false' : 'true' }} }" >
+            <x-field name="whatsapp" type="tel" label="WhatsApp" :value="$provider->whatsapp" hint="Laisser vide si c'est le même numéro." :readonly="$provider->locksFields()" x-bind:readonly="!edit" />
+            @include('pro.profile._lock-note', ['field' => 'whatsapp'])
+        </div>
     </div>
 </section>

@@ -100,7 +100,7 @@
         </div>
 
         <aside class="space-y-5">
-            <section class="card p-5 lg:sticky lg:top-20">
+            <section class="card p-5">
                 <h1 class="text-xl font-extrabold">{{ $product->name }}</h1>
                 <p class="mt-2 text-3xl font-extrabold text-brand-600">{{ $product->priceLabel() }}<span class="text-base font-semibold">{{ $product->unitSuffix() }}</span></p>
                 @if ($product->discountPercent())

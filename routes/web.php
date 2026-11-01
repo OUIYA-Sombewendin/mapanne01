@@ -10,7 +10,9 @@ use App\Http\Controllers\Auth\TwoFactorController;
 use App\Http\Controllers\Auth\VerificationController;
 use App\Http\Controllers\ElectricController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\LocationController;
 use App\Http\Controllers\MarketplaceController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PartRequestController;
 use App\Http\Controllers\Pro;
@@ -86,6 +88,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/mes-favoris', [Account\SpaceController::class, 'favorites'])->name('account.favorites');
         Route::get('/mes-avis', [Account\SpaceController::class, 'reviews'])->name('account.reviews');
     });
+
+    // Placer un point sur la carte : recherche d'un lieu, lien Google Maps ou position WhatsApp
+    Route::get('/localisation/chercher', [LocationController::class, 'search'])->middleware('throttle:30,1')->name('location.search');
+    Route::post('/localisation/lien', [LocationController::class, 'link'])->middleware('throttle:20,1')->name('location.link');
+
+    // Notifications de la cloche (validation de la fiche, demandes de modification…)
+    Route::get('/notifications/{id}', [NotificationController::class, 'open'])->whereUuid('id')->name('notifications.open');
+    Route::post('/notifications/lues', [NotificationController::class, 'readAll'])->name('notifications.read-all');
 
     // Notifications push de cet appareil
     Route::post('/notifications/push', [PushSubscriptionController::class, 'store'])->middleware('throttle:20,1')->name('push.store');
@@ -280,6 +290,7 @@ Route::middleware('auth')->group(function () {
             Route::post('/prestataires/{provider}/suspendre', [Admin\ProviderController::class, 'suspend'])->name('providers.suspend');
             Route::post('/prestataires/{provider}/reactiver', [Admin\ProviderController::class, 'reactivate'])->name('providers.reactivate');
             Route::post('/prestataires/{provider}/verifie', [Admin\ProviderController::class, 'markReviewed'])->name('providers.reviewed');
+            Route::post('/prestataires/{provider}/appliquer', [Admin\ProviderController::class, 'applyChanges'])->name('providers.apply-changes');
             Route::post('/prestataires/{provider}/une', [Admin\ProviderController::class, 'toggleFeatured'])->name('providers.featured');
         });
 
