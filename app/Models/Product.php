@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\VehicleType;
 use App\Models\Concerns\Lockable;
+use App\Support\PartCatalog;
 use App\Support\Phone;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -27,7 +28,7 @@ class Product extends Model
 
     /** La modération (is_hidden, approved_at), la mise en avant et les compteurs ne sont pas assignables. */
     protected $fillable = [
-        'part_category_id', 'name', 'description', 'brand', 'reference', 'compatibility',
+        'part_category_id', 'name', 'description', 'brand', 'reference', 'barcode', 'unit', 'compatibility',
         'vehicle_types', 'condition', 'warranty', 'price', 'compare_at_price', 'stock', 'on_order', 'is_active',
         'cost_price', 'stock_alert', 'shelf',
     ];
@@ -102,6 +103,30 @@ class Product extends Model
         return $this->belongsTo(PartCategory::class, 'part_category_id');
     }
 
+    /** Compatibilité structurée : marque, modèle, années. */
+    public function fitments(): HasMany
+    {
+        return $this->hasMany(ProductFitment::class)->orderBy('make')->orderBy('model');
+    }
+
+    /** Remplace la compatibilité par la liste saisie (lignes sans marque ignorées). */
+    public function syncFitments(array $rows): void
+    {
+        $this->fitments()->delete();
+        foreach ($rows as $row) {
+            if (blank($row['make'] ?? null)) {
+                continue;
+            }
+            $this->fitments()->create([
+                'make' => PartCatalog::make($row['make']),
+                'model' => filled($row['model'] ?? null) ? trim($row['model']) : null,
+                'year_from' => $row['year_from'] ?? null,
+                'year_to' => $row['year_to'] ?? null,
+            ]);
+        }
+        $this->unsetRelation('fitments');
+    }
+
     public function photos(): HasMany
     {
         return $this->hasMany(ProductPhoto::class)->orderBy('position')->orderBy('id');
@@ -135,6 +160,12 @@ class Product extends Model
     public function priceLabel(): string
     {
         return static::formatPrice($this->price);
+    }
+
+    /** « / paire », « / litre »… (rien pour la pièce à l'unité). */
+    public function unitSuffix(): string
+    {
+        return $this->unit && $this->unit !== 'piece' ? ' / '.PartCatalog::unitLabel($this->unit) : '';
     }
 
     public static function formatPrice(?int $amount): string

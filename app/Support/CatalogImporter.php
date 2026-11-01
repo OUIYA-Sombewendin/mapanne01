@@ -31,6 +31,8 @@ class CatalogImporter
         'description' => 'Description',
         'prix_achat' => 'Prix d\'achat (jamais affiché aux clients)',
         'emplacement' => 'Emplacement en boutique (ex. Rayon A)',
+        'code_barres' => 'Code-barres',
+        'unite' => 'Unité de vente : pièce, paire, jeu, kit, litre, bidon, boîte, mètre',
     ];
 
     private array $categories;
@@ -121,6 +123,8 @@ class CatalogImporter
                 'description' => $r['description'] ?? null,
                 'cost_price' => ($cost = (int) preg_replace('/\D/', '', (string) ($r['prix_achat'] ?? ''))) > 0 ? $cost : null,
                 'shelf' => Str::limit((string) ($r['emplacement'] ?? ''), 60, '') ?: null,
+                'barcode' => ($code = strtoupper(preg_replace('/[^0-9A-Za-z\-]/', '', (string) ($r['code_barres'] ?? '')))) !== '' ? Str::limit($code, 40, '') : null,
+                'unit' => collect(PartCatalog::UNITS)->search(fn ($labels) => in_array(Str::lower(trim((string) ($r['unite'] ?? ''))), $labels, true)) ?: 'piece',
             ];
 
             // Le stock passe par l'inventaire pour garder l'historique des mouvements.

@@ -34,7 +34,7 @@
                 {{-- Sur mobile, le nom et le prix suivent directement la photo. --}}
                 <div class="p-4 lg:hidden">
                     <p class="text-lg font-extrabold">{{ $product->name }}</p>
-                    <p class="text-2xl font-extrabold text-brand-600">{{ $product->priceLabel() }}
+                    <p class="text-2xl font-extrabold text-brand-600">{{ $product->priceLabel() }}<span class="text-sm font-semibold">{{ $product->unitSuffix() }}</span>
                         @if ($product->discountPercent())
                             <span class="text-sm font-normal text-ink-400 line-through">{{ \App\Models\Product::formatPrice($product->compare_at_price) }}</span>
                             <span class="chip bg-red-600 align-middle text-white">-{{ $product->discountPercent() }} %</span>
@@ -56,17 +56,28 @@
                 <h2 class="mb-3 font-bold">Caractéristiques</h2>
                 <dl class="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
                     @foreach (array_filter([
-                        'Catégorie' => $product->category->name,
+                        'Catégorie' => $product->category->fullName(),
                         'État' => $product->conditionLabel(),
                         'Marque' => $product->brand,
                         'Référence' => $product->reference,
                         'Véhicules' => implode(', ', $product->vehicleTypeLabels()),
-                        'Compatible avec' => $product->compatibility,
+                        'Précisions' => $product->fitments->isNotEmpty() ? $product->compatibility : null,
+                        'Compatible avec' => $product->fitments->isEmpty() ? $product->compatibility : null,
                         'Garantie' => $product->warranty,
                     ]) as $label => $value)
                         <div><dt class="text-xs text-ink-400">{{ $label }}</dt><dd class="font-medium">{{ $value }}</dd></div>
                     @endforeach
                 </dl>
+                @if ($product->fitments->isNotEmpty())
+                    <div class="mt-4">
+                        <p class="text-xs text-ink-400">Véhicules compatibles</p>
+                        <div class="mt-1 flex flex-wrap gap-1.5">
+                            @foreach ($product->fitments as $fit)
+                                <a href="{{ route('products.index', array_filter(['make' => $fit->make, 'model' => $fit->model, 'category' => $product->category->slug])) }}" class="chip bg-sky-50 px-2.5 py-1 text-sky-800 ring-1 ring-sky-200 hover:bg-sky-100">{{ $fit->label() }}</a>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
                 @if ($product->description)
                     <p class="mt-4 text-sm leading-relaxed whitespace-pre-line text-ink-700">{{ $product->description }}</p>
                 @endif
@@ -91,7 +102,7 @@
         <aside class="space-y-5">
             <section class="card p-5 lg:sticky lg:top-20">
                 <h1 class="text-xl font-extrabold">{{ $product->name }}</h1>
-                <p class="mt-2 text-3xl font-extrabold text-brand-600">{{ $product->priceLabel() }}</p>
+                <p class="mt-2 text-3xl font-extrabold text-brand-600">{{ $product->priceLabel() }}<span class="text-base font-semibold">{{ $product->unitSuffix() }}</span></p>
                 @if ($product->discountPercent())
                     <p class="text-sm"><span class="text-ink-400 line-through">{{ \App\Models\Product::formatPrice($product->compare_at_price) }}</span>
                         <span class="chip bg-red-600 text-white">-{{ $product->discountPercent() }} %</span></p>

@@ -16,7 +16,16 @@
                 <select id="part_category_id" name="part_category_id" class="input" required>
                     <option value="">Choisir…</option>
                     @foreach ($categories as $category)
-                        <option value="{{ $category->id }}" @selected(old('part_category_id', $product->part_category_id) == $category->id)>{{ $category->icon }} {{ $category->name }}</option>
+                        @if ($category->children->isEmpty())
+                            <option value="{{ $category->id }}" @selected(old('part_category_id', $product->part_category_id) == $category->id)>{{ $category->icon }} {{ $category->name }}</option>
+                        @else
+                            <optgroup label="{{ $category->icon }} {{ $category->name }}">
+                                <option value="{{ $category->id }}" @selected(old('part_category_id', $product->part_category_id) == $category->id)>{{ $category->name }} (autre)</option>
+                                @foreach ($category->children as $sub)
+                                    <option value="{{ $sub->id }}" @selected(old('part_category_id', $product->part_category_id) == $sub->id)>{{ $sub->name }}</option>
+                                @endforeach
+                            </optgroup>
+                        @endif
                     @endforeach
                 </select>
                 @error('part_category_id') <p class="field-error">{{ $message }}</p> @enderror
@@ -24,6 +33,15 @@
             <div class="grid grid-cols-2 gap-3">
                 <x-field name="brand" label="Marque de la pièce" :value="$product->brand" placeholder="Bosch, NGK…" />
                 <x-field name="reference" label="Référence" :value="$product->reference" />
+            </div>
+            <div x-data="barcodeScanner" @scanned="$refs.barcode.value = $event.detail">
+                <label class="field-label" for="barcode">Code-barres (facultatif)</label>
+                <div class="flex gap-2">
+                    <input id="barcode" name="barcode" x-ref="barcode" value="{{ old('barcode', $product->barcode) }}" class="input" placeholder="Scannez ou tapez le code" autocomplete="off">
+                    <button type="button" x-show="supported" x-cloak @click="start()" class="btn btn-ghost shrink-0">📷 Scanner</button>
+                </div>
+                @include('pro._scanner')
+                @error('barcode') <p class="field-error">{{ $message }}</p> @enderror
             </div>
             <x-field name="description" type="textarea" label="Description" :value="$product->description" />
 
@@ -52,12 +70,35 @@
                 </div>
                 @error('vehicle_types') <p class="field-error">{{ $message }}</p> @enderror
             </fieldset>
-            <x-field name="compatibility" label="Marques et modèles compatibles" :value="$product->compatibility"
-                     placeholder="Ex. Toyota Corolla 2008-2014, Yaris" hint="Les clients cherchent souvent par modèle : soyez précis." />
+            @php($fitmentRows = old('fitments', $product->relationLoaded('fitments') ? $product->fitments->map->only(['make', 'model', 'year_from', 'year_to'])->all() : []))
+            <fieldset x-data="{ rows: @js(array_values($fitmentRows ?: [['make' => '', 'model' => '', 'year_from' => '', 'year_to' => '']])) }">
+                <legend class="field-label">Véhicules compatibles</legend>
+                <p class="mb-2 text-xs text-ink-500">Les clients filtrent par marque, modèle et année : une ligne par modèle. Laissez le modèle vide si la pièce va à toute la marque.</p>
+                <datalist id="makes">@foreach ($makes as $make)<option value="{{ $make }}">@endforeach</datalist>
+                <template x-for="(row, i) in rows" :key="i">
+                    <div class="mb-2 grid grid-cols-[1fr_1fr_4.5rem_4.5rem_auto] items-center gap-1.5">
+                        <input :name="`fitments[${i}][make]`" x-model="row.make" list="makes" class="input-sm" placeholder="Marque" aria-label="Marque">
+                        <input :name="`fitments[${i}][model]`" x-model="row.model" class="input-sm" placeholder="Modèle" aria-label="Modèle">
+                        <input :name="`fitments[${i}][year_from]`" x-model="row.year_from" type="number" min="1960" class="input-sm" placeholder="De" aria-label="Année de début">
+                        <input :name="`fitments[${i}][year_to]`" x-model="row.year_to" type="number" min="1960" class="input-sm" placeholder="À" aria-label="Année de fin">
+                        <button type="button" @click="rows.splice(i, 1)" class="px-1 text-ink-400 hover:text-red-600" aria-label="Retirer">✕</button>
+                    </div>
+                </template>
+                <button type="button" @click="rows.push({ make: '', model: '', year_from: '', year_to: '' })" class="btn btn-ghost btn-sm">+ Ajouter un véhicule</button>
+                @error('fitments.*') <p class="field-error">{{ $message }}</p> @enderror
+            </fieldset>
+            <x-field name="compatibility" label="Autres précisions de compatibilité" :value="$product->compatibility"
+                     placeholder="Ex. moteur 1.6 essence uniquement" />
 
             <h2 class="pt-2 font-bold">Prix et stock</h2>
             <div class="grid grid-cols-2 gap-3">
                 <x-field name="price" type="number" label="Prix de vente (FCFA)" :value="$product->price" min="50" step="25" required />
+                <div>
+                    <label class="field-label" for="unit">Vendu à</label>
+                    <select id="unit" name="unit" class="input">
+                        @foreach ($units as $key => [$label]) <option value="{{ $key }}" @selected(old('unit', $product->unit ?? 'piece') === $key)>l'unité : {{ $label }}</option> @endforeach
+                    </select>
+                </div>
                 <x-field name="compare_at_price" type="number" label="Ancien prix (promo)" :value="$product->compare_at_price" min="50" step="25" hint="Facultatif : affiché barré." />
                 <x-field name="stock" type="number" label="Quantité en stock" :value="$product->stock ?? 0" min="0" required />
                 <x-field name="warranty" label="Garantie" :value="$product->warranty" placeholder="Ex. 3 mois" />

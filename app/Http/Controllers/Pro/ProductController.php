@@ -11,6 +11,7 @@ use App\Models\Provider;
 use App\Support\CatalogImporter;
 use App\Support\ImageOptimizer;
 use App\Support\Inventory;
+use App\Support\PartCatalog;
 use App\Support\Listing;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -40,7 +41,7 @@ class ProductController extends Controller
             ->when($request->query('filter') === 'pending', fn ($query) => $query->whereNull('approved_at'))
             ->when($request->query('filter') === 'promo', fn ($query) => $query->whereNotNull('compare_at_price'))
             ->when($request->query('filter') === 'hidden', fn ($query) => $query->where('is_hidden', true))
-            ->when($request->query('category'), fn ($query, $id) => $query->where('part_category_id', $id))
+            ->when($request->query('category'), fn ($query, $id) => $query->whereIn('part_category_id', PartCategory::familyIdsOf($id)))
             ->when($request->query('condition'), fn ($query, $c) => $query->where('condition', $c)), $request, [
                 'created' => 'created_at',
                 'name' => 'name',
@@ -54,7 +55,7 @@ class ProductController extends Controller
 
         return view('pro.products.index', [
             'provider' => $shop,
-            'categories' => PartCategory::orderBy('position')->get(['id', 'name']),
+            'categories' => PartCategory::tree(),
             'products' => $products,
             'stats' => [
                 'total' => $shop->products()->count(),
@@ -83,6 +84,7 @@ class ProductController extends Controller
         $product = DB::transaction(function () use ($shop, $data, $request) {
             // Le stock de départ est enregistré comme un mouvement « Stock initial ».
             $product = $shop->products()->create(['stock' => 0] + $data);
+            $product->syncFitments($this->fitments($request));
             if ($data['stock'] > 0) {
                 Inventory::move($product, 'in', $data['stock'], 'initial', $data['cost_price'] ?? null);
             }
@@ -98,7 +100,7 @@ class ProductController extends Controller
 
     public function edit(Request $request, Product $product): View
     {
-        return $this->form($this->shop($request, $product), $product->load('photos'));
+        return $this->form($this->shop($request, $product), $product->load('photos', 'fitments'));
     }
 
     public function update(Request $request, Product $product): RedirectResponse
@@ -107,6 +109,7 @@ class ProductController extends Controller
         $data = $this->validated($request, $product);
         $stock = $data['stock'];
         $product->update(collect($data)->except('stock')->all());
+        $product->syncFitments($this->fitments($request));
         if ($stock !== $product->stock) {
             Inventory::move($product, 'adjust', $stock, 'inventory', null, 'Modification de la fiche produit');
         }
@@ -218,10 +221,12 @@ class ProductController extends Controller
         return view('pro.products.form', [
             'provider' => $shop,
             'product' => $product,
-            'categories' => PartCategory::orderBy('position')->get(),
+            'categories' => PartCategory::tree(),
             'vehicleTypes' => VehicleType::options(),
             'conditions' => $this->conditions(),
             'maxPhotos' => $this->maxPhotos(),
+            'units' => PartCatalog::UNITS,
+            'makes' => PartCatalog::MAKES,
         ]);
     }
 
@@ -236,7 +241,14 @@ class ProductController extends Controller
             'description' => ['nullable', 'string', 'max:2000'],
             'brand' => ['nullable', 'string', 'max:60'],
             'reference' => ['nullable', 'string', 'max:60'],
+            'barcode' => ['nullable', 'string', 'max:40', 'regex:/^[0-9A-Za-z\-]+$/'],
+            'unit' => ['nullable', Rule::in(array_keys(PartCatalog::UNITS))],
             'compatibility' => ['nullable', 'string', 'max:255'],
+            'fitments' => ['array', 'max:30'],
+            'fitments.*.make' => ['nullable', 'string', 'max:40'],
+            'fitments.*.model' => ['nullable', 'string', 'max:60'],
+            'fitments.*.year_from' => ['nullable', 'integer', 'between:1960,'.(now()->year + 1)],
+            'fitments.*.year_to' => ['nullable', 'integer', 'between:1960,'.(now()->year + 1)],
             'vehicle_types' => ['required', 'array', 'min:1'],
             'vehicle_types.*' => [Rule::enum(VehicleType::class)],
             'condition' => ['required', Rule::in(array_keys($this->conditions()))],
@@ -255,6 +267,7 @@ class ProductController extends Controller
             'vehicle_types.required' => 'Choisissez au moins un type de véhicule compatible.',
             'photos.max' => 'Maximum '.$max.' photos par produit.',
             'compare_at_price.gt' => 'Le prix barré doit être supérieur au prix de vente.',
+            'barcode.regex' => 'Le code-barres ne contient que des chiffres, des lettres et des tirets.',
         ]);
 
         $data['vehicle_types'] = array_values(array_unique($data['vehicle_types']));
@@ -264,9 +277,29 @@ class ProductController extends Controller
         $data['cost_price'] ??= null;
         $data['stock_alert'] ??= null;
         $data['shelf'] ??= null;
+        $data['unit'] ??= 'piece';
+        $data['barcode'] = filled($data['barcode'] ?? null) ? strtoupper(trim($data['barcode'])) : null;
         $data['stock'] = (int) $data['stock'];
 
-        return collect($data)->except('photos')->all();
+        return collect($data)->except(['photos', 'fitments'])->all();
+    }
+
+    /** Lignes de compatibilité saisies (marque, modèle, années). */
+    private function fitments(Request $request): array
+    {
+        return collect((array) $request->input('fitments', []))
+            ->filter(fn ($row) => is_array($row) && filled($row['make'] ?? null))
+            ->map(function ($row) {
+                // Années saisies à l'envers : on les remet dans l'ordre.
+                $from = filled($row['year_from'] ?? null) ? (int) $row['year_from'] : null;
+                $to = filled($row['year_to'] ?? null) ? (int) $row['year_to'] : null;
+                if ($from && $to && $from > $to) {
+                    [$from, $to] = [$to, $from];
+                }
+
+                return ['make' => $row['make'], 'model' => $row['model'] ?? null, 'year_from' => $from, 'year_to' => $to];
+            })
+            ->values()->all();
     }
 
     private function storePhotos(Request $request, Product $product): void

@@ -28,12 +28,13 @@ class StockController extends Controller
             ->when($q !== '', fn ($query) => $query->where(fn ($w) => $w
                 ->where('name', 'ilike', Listing::like($q))
                 ->orWhere('reference', 'ilike', Listing::like($q))
+                ->orWhere('barcode', $q)
                 ->orWhere('shelf', 'ilike', Listing::like($q))))
             ->when($request->query('filter') === 'low', fn ($query) => $query->where('on_order', false)->whereRaw('stock <= COALESCE(stock_alert, 0)'))
             ->when($request->query('filter') === 'out', fn ($query) => $query->where('stock', 0))
             ->when($request->query('filter') === 'nocost', fn ($query) => $query->whereNull('cost_price'))
             ->when($request->query('filter') === 'unpublished', fn ($query) => $query->where('is_active', false))
-            ->when($request->query('category'), fn ($query, $id) => $query->where('part_category_id', $id))
+            ->when($request->query('category'), fn ($query, $id) => $query->whereIn('part_category_id', PartCategory::familyIdsOf($id)))
             ->when($request->query('shelf'), fn ($query, $s) => $query->where('shelf', $s)), $request, [
                 'name' => 'name',
                 'shelf' => 'shelf',
@@ -49,7 +50,7 @@ class StockController extends Controller
         return view('pro.manage.stock', [
             'provider' => $shop,
             'products' => $products,
-            'categories' => PartCategory::orderBy('position')->get(['id', 'name']),
+            'categories' => PartCategory::tree(),
             'shelves' => $shop->products()->whereNotNull('shelf')->distinct()->orderBy('shelf')->pluck('shelf'),
             'allProducts' => $shop->products()->orderBy('name')->get(['id', 'name', 'stock', 'cost_price']),
             'value' => ShopReport::stockValue($shop),

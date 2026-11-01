@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\PartCategory;
+use App\Support\PartCatalog;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
@@ -32,5 +33,7 @@ class PartCategorySeeder extends Seeder
                 ['name' => $name, 'icon' => $icon, 'position' => $position]
             );
         }
+
+        PartCatalog::seedSubcategories();
     }
 }

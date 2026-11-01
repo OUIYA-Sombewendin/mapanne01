@@ -14,6 +14,7 @@
                     <option value="">Toutes catégories</option>
                     @foreach ($categories as $c)
                         <option value="{{ $c->id }}" @selected(request('category') == $c->id)>{{ $c->name }}</option>
+                        @foreach ($c->children as $sub) <option value="{{ $sub->id }}" @selected(request('category') == $sub->id)>&nbsp;&nbsp;› {{ $sub->name }}</option> @endforeach
                     @endforeach
                 </select>
                 <select name="shop" class="input-sm max-w-48">
@@ -112,7 +113,10 @@
                 <h2 class="mb-2 font-bold">Catégories</h2>
                 <ul class="space-y-1 text-sm">
                     @foreach ($categories as $c)
-                        <li class="flex justify-between"><span>{{ $c->icon }} {{ $c->name }}</span><span class="text-ink-400">{{ $c->products_count }}</span></li>
+                        <li class="flex justify-between font-medium"><span>{{ $c->icon }} {{ $c->name }}</span><span class="text-ink-400">{{ $c->products_count + $c->children->sum('products_count') }}</span></li>
+                        @foreach ($c->children as $sub)
+                            <li class="flex justify-between pl-6 text-ink-600"><span>› {{ $sub->name }}</span><span class="text-ink-400">{{ $sub->products_count }}</span></li>
+                        @endforeach
                     @endforeach
                 </ul>
             </section>
@@ -123,6 +127,10 @@
                     <input name="icon" class="input text-center" placeholder="🔩" maxlength="8">
                     <input name="name" class="input" placeholder="Nom" required>
                 </div>
+                <select name="parent_id" class="input" aria-label="Catégorie parente">
+                    <option value="">Catégorie principale</option>
+                    @foreach ($categories as $c) <option value="{{ $c->id }}">Sous-catégorie de : {{ $c->name }}</option> @endforeach
+                </select>
                 <button class="btn btn-dark w-full">Ajouter</button>
             </form>
         </aside>

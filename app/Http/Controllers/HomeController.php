@@ -41,7 +41,7 @@ class HomeController extends Controller
                     ->orderByDesc('is_featured')->orderByDesc('rating_avg')->orderByDesc('reviews_count')
                     ->take(4)->get()
                 : collect(),
-            'partCategories' => $marketplace ? PartCategory::orderBy('position')->get() : collect(),
+            'partCategories' => $marketplace ? PartCategory::roots()->orderBy('position')->get() : collect(),
             'latestProducts' => $marketplace
                 ? Product::visible()->with(['photos', 'category:id,icon', 'provider.neighborhood:id,name'])->orderByDesc('is_featured')->latest()->take(8)->get()
                 : collect(),

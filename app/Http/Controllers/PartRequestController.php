@@ -31,7 +31,7 @@ class PartRequestController extends Controller
     public function create(Request $request): View
     {
         return view('part-requests.create', [
-            'categories' => PartCategory::orderBy('position')->get(),
+            'categories' => PartCategory::roots()->orderBy('position')->get(),
             'cities' => City::where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'vehicleTypes' => VehicleType::options(),
             'vehicles' => $request->user()->vehicles,

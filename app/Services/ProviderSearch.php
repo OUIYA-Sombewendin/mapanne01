@@ -3,10 +3,12 @@
 namespace App\Services;
 
 use App\Enums\Availability;
+use App\Enums\VehicleType;
 use App\Models\City;
 use App\Models\Neighborhood;
 use App\Models\Provider;
 use App\Models\ProviderType;
+use App\Support\SearchProblems;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -21,6 +23,9 @@ class ProviderSearch
 
     /** Centre de recherche effectif : ['lat','lng','label'] ou null. */
     public ?array $center = null;
+
+    /** Ce que la recherche libre a compris : problèmes reconnus et véhicule cité. */
+    public array $understood = ['problems' => [], 'vehicle' => null];
 
     public function __construct(array $input)
     {
@@ -42,7 +47,17 @@ class ProviderSearch
             'verified' => filter_var($input['verified'] ?? false, FILTER_VALIDATE_BOOL),
             'electric' => filter_var($input['electric'] ?? false, FILTER_VALIDATE_BOOL),
             'available' => filter_var($input['available'] ?? false, FILTER_VALIDATE_BOOL),
+            'vehicle' => VehicleType::tryFrom((string) ($input['vehicle'] ?? ''))?->value,
+            'problem' => array_key_exists((string) ($input['problem'] ?? ''), SearchProblems::ALL) ? (string) $input['problem'] : null,
         ];
+
+        // « ma moto ne démarre pas » : problème et véhicule reconnus dans la phrase.
+        if ($this->filters['q'] !== '') {
+            $this->understood = [
+                'problems' => SearchProblems::detect($this->filters['q']),
+                'vehicle' => $this->filters['vehicle'] ? null : SearchProblems::vehicle($this->filters['q']),
+            ];
+        }
 
         $this->resolveCenter();
     }
@@ -114,13 +129,23 @@ class ProviderSearch
             $query->whereHas('services', fn (Builder $q) => $q->where('slug', $f['service']));
         }
 
+        if ($f['problem']) {
+            $query->whereHas('services', fn (Builder $s) => $s->whereIn('slug', SearchProblems::services([$f['problem']])));
+        }
+
         if ($f['q'] !== '') {
             $term = '%'.str_replace(['%', '_'], ['\%', '\_'], $f['q']).'%';
-            $query->where(function (Builder $q) use ($term) {
+            $problemServices = SearchProblems::services($this->understood['problems']);
+            $query->where(function (Builder $q) use ($term, $problemServices) {
                 $q->where('business_name', 'ilike', $term)
                     ->orWhere('description', 'ilike', $term)
-                    ->orWhereHas('services', fn (Builder $s) => $s->where('name', 'ilike', $term));
+                    ->orWhereHas('services', fn (Builder $s) => $s->where('name', 'ilike', $term))
+                    ->when($problemServices, fn ($q) => $q->orWhereHas('services', fn (Builder $s) => $s->whereIn('slug', $problemServices)));
             });
+        }
+
+        if ($vehicle = $f['vehicle'] ?? $this->understood['vehicle']) {
+            $this->whereServesVehicle($query, $vehicle);
         }
 
         if ($f['verified']) {
@@ -142,6 +167,19 @@ class ProviderSearch
         }
 
         return $query;
+    }
+
+    /**
+     * Exclut les prestataires dont la fiche métier liste des véhicules qui ne comprennent pas celui-ci.
+     * Une fiche qui ne précise rien (garage, station, fiche incomplète) reste proposée.
+     */
+    private function whereServesVehicle(Builder $query, string $vehicle): void
+    {
+        foreach (['mechanic_profiles', 'tow_truck_profiles', 'shop_profiles'] as $table) {
+            $query->whereNotExists(fn ($q) => $q->selectRaw('1')->from($table)
+                ->whereColumn($table.'.provider_id', 'providers.id')
+                ->whereRaw("CASE WHEN jsonb_typeof({$table}.vehicle_types) = 'array' AND jsonb_array_length({$table}.vehicle_types) > 0 THEN NOT ({$table}.vehicle_types @> ?::jsonb) ELSE false END", [json_encode([$vehicle])]));
+        }
     }
 
     public function paginate(): LengthAwarePaginator

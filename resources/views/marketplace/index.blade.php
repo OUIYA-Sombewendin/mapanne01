@@ -25,6 +25,18 @@
             <button class="btn btn-primary">Chercher</button>
         </div>
 
+        {{-- Véhicule précis : seules les pièces compatibles s'affichent --}}
+        <div class="mt-3 flex flex-wrap items-center gap-2 rounded-2xl bg-white p-2 ring-1 ring-ink-100">
+            <span class="px-1 text-sm font-semibold">🚗 Mon véhicule</span>
+            <datalist id="makes">@foreach ($makes as $make)<option value="{{ $make }}">@endforeach</datalist>
+            <input name="make" value="{{ $filters['make'] }}" list="makes" class="input-sm w-32 flex-1 sm:flex-none" placeholder="Marque" aria-label="Marque du véhicule">
+            <input name="model" value="{{ $filters['model'] }}" class="input-sm w-32 flex-1 sm:flex-none" placeholder="Modèle" aria-label="Modèle">
+            <input name="year" value="{{ $filters['year'] }}" type="number" min="1960" max="{{ now()->year + 1 }}" class="input-sm w-24" placeholder="Année" aria-label="Année">
+            @if ($filters['make'])
+                <a href="{{ route('products.index', collect($filters)->except(['make', 'model', 'year', 'sort'])->filter()->all()) }}" class="text-xs text-ink-400 underline">effacer</a>
+            @endif
+        </div>
+
         <div class="mt-3 flex flex-wrap items-center gap-2 text-sm" x-data="geoSearch">
             <button type="button" @click="locate()" :disabled="loading" class="chip border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm text-blue-700">
                 <span x-text="loading ? 'Localisation…' : '📍 Boutiques proches de moi'">📍 Boutiques proches de moi</span>
@@ -74,24 +86,37 @@
         </div>
     </form>
 
-    {{-- Catégories --}}
+    {{-- Catégories, puis sous-catégories de la catégorie choisie --}}
+    @php($rootCategory = $currentCategory?->parent ?? $currentCategory)
     <div class="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-2">
         <a href="{{ route('products.index', collect($filters)->except(['category', 'sort'])->filter()->all()) }}"
            @class(['chip shrink-0 px-3 py-2 text-sm', 'bg-ink-800 text-white' => ! $currentCategory, 'bg-white text-ink-700 ring-1 ring-ink-200' => $currentCategory])>Toutes</a>
         @foreach ($categories as $category)
             <a href="{{ route('products.index', ['category' => $category->slug] + collect($filters)->except(['category', 'sort'])->filter()->all()) }}"
-               @class(['chip shrink-0 px-3 py-2 text-sm', 'bg-ink-800 text-white' => $currentCategory?->is($category), 'bg-white text-ink-700 ring-1 ring-ink-200' => ! $currentCategory?->is($category)])>
+               @class(['chip shrink-0 px-3 py-2 text-sm', 'bg-ink-800 text-white' => $rootCategory?->is($category), 'bg-white text-ink-700 ring-1 ring-ink-200' => ! $rootCategory?->is($category)])>
                 {{ $category->icon }} {{ $category->name }}
             </a>
         @endforeach
     </div>
+    @php($subCategories = $rootCategory ? $categories->firstWhere('id', $rootCategory->id)?->children ?? collect() : collect())
+    @if ($subCategories->isNotEmpty())
+        <div class="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2">
+            <a href="{{ route('products.index', ['category' => $rootCategory->slug] + collect($filters)->except(['category', 'sort'])->filter()->all()) }}"
+               @class(['chip shrink-0 px-3 py-1.5 text-xs', 'bg-brand-600 text-white' => $currentCategory?->is($rootCategory), 'bg-brand-50 text-brand-800' => ! $currentCategory?->is($rootCategory)])>Tout {{ mb_strtolower($rootCategory->name) }}</a>
+            @foreach ($subCategories as $sub)
+                <a href="{{ route('products.index', ['category' => $sub->slug] + collect($filters)->except(['category', 'sort'])->filter()->all()) }}"
+                   @class(['chip shrink-0 px-3 py-1.5 text-xs', 'bg-brand-600 text-white' => $currentCategory?->is($sub), 'bg-brand-50 text-brand-800' => ! $currentCategory?->is($sub)])>{{ $sub->icon }} {{ $sub->name }}</a>
+            @endforeach
+        </div>
+    @endif
 
     {{-- Raccourcis vers les pièces compatibles avec les véhicules enregistrés du client --}}
     @if ($myVehicles->isNotEmpty())
         <div class="mt-3 flex flex-wrap items-center gap-2 text-sm">
             <span class="text-ink-500">Pour mon véhicule :</span>
             @foreach ($myVehicles as $v)
-                <a href="{{ route('products.index', ['q' => trim($v->brand.' '.$v->model), 'vehicle' => $v->type->value]) }}" class="chip bg-sky-50 px-3 py-1.5 text-sky-800 ring-1 ring-sky-200">🚘 {{ $v->title() }}</a>
+                <a href="{{ route('products.index', array_filter(['make' => $v->brand, 'model' => $v->model, 'year' => $v->year, 'vehicle' => $v->type->value, 'category' => $filters['category']])) }}"
+                   @class(['chip px-3 py-1.5 ring-1', 'bg-sky-600 text-white ring-sky-600' => $filters['make'] && mb_strtolower($filters['make']) === mb_strtolower($v->brand), 'bg-sky-50 text-sky-800 ring-sky-200' => ! ($filters['make'] && mb_strtolower($filters['make']) === mb_strtolower($v->brand))])>{{ $v->icon() }} {{ $v->title() }}</a>
             @endforeach
         </div>
     @endif

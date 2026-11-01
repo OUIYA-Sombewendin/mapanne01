@@ -9,7 +9,10 @@
         <input type="search" name="q" value="{{ request('q') }}" class="input-sm w-60" placeholder="Pièce ou référence (ex. plaquette)">
         <select name="category" class="input-sm">
             <option value="">Toutes les catégories</option>
-            @foreach ($partCategories as $c) <option value="{{ $c->id }}" @selected(request('category') == $c->id)>{{ $c->icon }} {{ $c->name }}</option> @endforeach
+            @foreach ($partCategories as $c)
+                <option value="{{ $c->id }}" @selected(request('category') == $c->id)>{{ $c->icon }} {{ $c->name }}</option>
+                @foreach ($c->children as $sub) <option value="{{ $sub->id }}" @selected(request('category') == $sub->id)>&nbsp;&nbsp;› {{ $sub->name }}</option> @endforeach
+            @endforeach
         </select>
         <select name="city" class="input-sm">
             <option value="">Toutes les villes</option>

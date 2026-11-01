@@ -186,6 +186,12 @@ class Provider extends Model
         return $this->hasMany(StockMovement::class);
     }
 
+    /** Inventaires physiques (comptages du rayon). */
+    public function stockCounts(): HasMany
+    {
+        return $this->hasMany(StockCount::class)->latest('id');
+    }
+
     public function subscriptions(): HasMany
     {
         return $this->hasMany(Subscription::class)->latest();

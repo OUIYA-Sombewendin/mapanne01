@@ -1,7 +1,10 @@
 @php($money = fn ($v) => \App\Support\ShopReport::money($v))
 <x-layouts.pro title="Stock">
     <h1 class="mb-1 text-2xl font-extrabold">Stock</h1>
-    <p class="mb-4 text-sm text-ink-500">Tout ce qui est dans votre boutique, publié ou non sur le marketplace. Chaque entrée et sortie est enregistrée.</p>
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <p class="text-sm text-ink-500">Tout ce qui est dans votre boutique, publié ou non sur le marketplace. Chaque entrée et sortie est enregistrée.</p>
+        <a href="{{ route('pro.manage.counts') }}" class="btn btn-dark btn-sm">📋 Faire l'inventaire</a>
+    </div>
 
     <div class="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4">
         <div class="card p-4"><p class="text-xs text-ink-500">Pièces en stock</p><p class="text-2xl font-extrabold">{{ number_format($value['units'], 0, ',', ' ') }}</p></div>
@@ -13,7 +16,7 @@
     <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div>
             <x-filter-bar :keys="['q', 'filter', 'category', 'shelf']">
-                <input type="search" name="q" value="{{ request('q') }}" class="input-sm w-48" placeholder="Nom, référence, rayon">
+                <input type="search" name="q" value="{{ request('q') }}" class="input-sm w-48" placeholder="Nom, référence, code-barres">
                 <select name="filter" class="input-sm">
                     <option value="">Toutes les pièces</option>
                     <option value="low" @selected(request('filter') === 'low')>Sous le seuil d'alerte</option>
@@ -23,7 +26,10 @@
                 </select>
                 <select name="category" class="input-sm">
                     <option value="">Toutes catégories</option>
-                    @foreach ($categories as $c) <option value="{{ $c->id }}" @selected(request('category') == $c->id)>{{ $c->name }}</option> @endforeach
+                    @foreach ($categories as $c)
+                        <option value="{{ $c->id }}" @selected(request('category') == $c->id)>{{ $c->name }}</option>
+                        @foreach ($c->children as $sub) <option value="{{ $sub->id }}" @selected(request('category') == $sub->id)>&nbsp;&nbsp;› {{ $sub->name }}</option> @endforeach
+                    @endforeach
                 </select>
                 @if ($shelves->isNotEmpty())
                     <select name="shelf" class="input-sm">

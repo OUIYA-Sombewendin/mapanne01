@@ -32,6 +32,8 @@ class SearchController extends Controller
         return view('search.index', [
             'providers' => $providers,
             'filters' => $search->filters,
+            'understood' => $search->understood,
+            'vehicles' => \App\Enums\VehicleType::options(),
             'center' => $search->center ?? ['lat' => (float) setting('map_default_lat'), 'lng' => (float) setting('map_default_lng'), 'label' => null],
             'hasCenter' => $search->center !== null,
             'markers' => $markers,

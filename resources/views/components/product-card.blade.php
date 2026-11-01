@@ -18,10 +18,12 @@
     </a>
     <div class="flex flex-1 flex-col p-3">
         <a href="{{ route('products.show', $product) }}" class="line-clamp-2 text-sm font-semibold hover:text-brand-600">{{ $product->name }}</a>
-        @if ($product->compatibility)
+        @if ($product->relationLoaded('fitments') && $product->fitments->isNotEmpty())
+            <p class="mt-0.5 line-clamp-1 text-xs text-ink-400">{{ $product->fitments->take(2)->map->label()->implode(', ') }}{{ $product->fitments->count() > 2 ? '…' : '' }}</p>
+        @elseif ($product->compatibility)
             <p class="mt-0.5 line-clamp-1 text-xs text-ink-400">{{ $product->compatibility }}</p>
         @endif
-        <p class="mt-1.5 text-base font-extrabold text-brand-600">{{ $product->priceLabel() }}
+        <p class="mt-1.5 text-base font-extrabold text-brand-600">{{ $product->priceLabel() }}<span class="text-xs font-semibold">{{ $product->unitSuffix() }}</span>
             @if ($product->discountPercent())
                 <span class="text-xs font-normal text-ink-400 line-through">{{ \App\Models\Product::formatPrice($product->compare_at_price) }}</span>
             @endif

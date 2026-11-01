@@ -377,5 +377,47 @@ Alpine.data('pushToggle', () => ({
     },
 }));
 
+
+/*
+ * Scan de code-barres avec la caméra (navigateurs qui proposent BarcodeDetector, comme Chrome sur Android).
+ * Émet l'évènement « scanned » avec le code lu ; le bouton reste caché ailleurs (saisie au clavier ou douchette).
+ */
+Alpine.data('barcodeScanner', () => ({
+    supported: 'BarcodeDetector' in window && !!navigator.mediaDevices?.getUserMedia,
+    open: false,
+    error: '',
+    async start() {
+        this.error = '';
+        this.open = true;
+        try {
+            const detector = new window.BarcodeDetector();
+            this.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+            const video = this.$refs.video;
+            video.srcObject = this.stream;
+            await video.play();
+            const scan = async () => {
+                if (!this.open) return;
+                try {
+                    const [code] = await detector.detect(video);
+                    if (code?.rawValue) {
+                        this.$dispatch('scanned', code.rawValue);
+                        this.stop();
+                        return;
+                    }
+                } catch { /* image pas encore prête */ }
+                requestAnimationFrame(scan);
+            };
+            scan();
+        } catch (e) {
+            this.error = 'Caméra indisponible : autorisez son accès ou tapez le code.';
+        }
+    },
+    stop() {
+        this.open = false;
+        this.stream?.getTracks().forEach((t) => t.stop());
+        this.stream = null;
+    },
+}));
+
 window.Alpine = Alpine;
 Alpine.start();

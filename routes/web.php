@@ -201,6 +201,12 @@ Route::middleware('auth')->group(function () {
                     Route::get('/stock', [Pro\StockController::class, 'index'])->name('stock');
                     Route::post('/stock', [Pro\StockController::class, 'store'])->name('stock.store');
                     Route::get('/stock/mouvements', [Pro\StockController::class, 'movements'])->name('stock.movements');
+                    Route::get('/stock/inventaires', [Pro\StockCountController::class, 'index'])->name('counts');
+                    Route::post('/stock/inventaires', [Pro\StockCountController::class, 'store'])->name('counts.store');
+                    Route::get('/stock/inventaires/{count}', [Pro\StockCountController::class, 'show'])->name('counts.show');
+                    Route::put('/stock/inventaires/{count}', [Pro\StockCountController::class, 'update'])->name('counts.update');
+                    Route::post('/stock/inventaires/{count}/valider', [Pro\StockCountController::class, 'apply'])->name('counts.apply');
+                    Route::delete('/stock/inventaires/{count}', [Pro\StockCountController::class, 'destroy'])->name('counts.destroy');
                 });
 
                 Route::middleware(['shop:invoices', 'plan:invoices'])->group(function () {

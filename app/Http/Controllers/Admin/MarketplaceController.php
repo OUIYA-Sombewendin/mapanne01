@@ -31,7 +31,7 @@ class MarketplaceController extends Controller
                 ->when($request->query('filter') === 'hidden', fn ($query) => $query->where('is_hidden', true))
                 ->when($request->query('filter') === 'pending', fn ($query) => $query->whereNull('approved_at'))
                 ->when($request->query('filter') === 'featured', fn ($query) => $query->where('is_featured', true))
-                ->when($request->query('category'), fn ($query, $id) => $query->where('part_category_id', $id))
+                ->when($request->query('category'), fn ($query, $id) => $query->whereIn('part_category_id', PartCategory::familyIdsOf($id)))
                 ->when($request->query('shop'), fn ($query, $id) => $query->where('provider_id', $id))
                 ->when($request->query('condition'), fn ($query, $c) => $query->where('condition', $c))
                 ->when($request->query('stock') === 'out', fn ($query) => $query->where('stock', 0)->where('on_order', false))
@@ -49,7 +49,7 @@ class MarketplaceController extends Controller
                 ->paginate(30)
                 ->withQueryString(),
             'shops' => Provider::whereIn('type', ProviderType::sellingSlugs())->orderBy('business_name')->get(['id', 'business_name']),
-            'categories' => PartCategory::withCount('products')->orderBy('position')->get(),
+            'categories' => PartCategory::roots()->withCount('products')->with(['children' => fn ($q) => $q->withCount('products')])->orderBy('position')->get(),
             'pendingCount' => Product::whereNull('approved_at')->count(),
             'requests' => PartRequest::with(['user:id,name', 'city:id,name'])->withCount('offers')->latest()->take(15)->get(),
         ]);
@@ -110,13 +110,16 @@ class MarketplaceController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:60', Rule::unique('part_categories', 'name')],
             'icon' => ['nullable', 'string', 'max:16'],
+            // Deux niveaux seulement : une sous-catégorie a pour parent une catégorie principale.
+            'parent_id' => ['nullable', Rule::exists('part_categories', 'id')->whereNull('parent_id')],
         ]);
+        $slug = Str::slug($data['name']);
 
         PartCategory::create($data + [
-            'slug' => Str::slug($data['name']),
-            'position' => (int) PartCategory::max('position') + 1,
+            'slug' => PartCategory::where('slug', $slug)->exists() ? $slug.'-'.Str::lower(Str::random(4)) : $slug,
+            'position' => (int) PartCategory::where('parent_id', $data['parent_id'] ?? null)->max('position') + 1,
         ]);
 
-        return back()->with('success', 'Catégorie de pièces ajoutée.');
+        return back()->with('success', empty($data['parent_id']) ? 'Catégorie de pièces ajoutée.' : 'Sous-catégorie ajoutée.');
     }
 }

@@ -23,7 +23,7 @@ class PriceWatchController extends Controller
             'categories' => PriceWatch::byCategory($filters),
             'parts' => PriceWatch::byPart($filters),
             'cities' => City::orderBy('name')->get(['id', 'name']),
-            'partCategories' => PartCategory::orderBy('position')->get(['id', 'name', 'icon']),
+            'partCategories' => PartCategory::tree(),
             'vehicles' => VehicleType::options(),
             'conditions' => Product::CONDITIONS,
         ]);

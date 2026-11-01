@@ -6,8 +6,10 @@ use App\Enums\VehicleType;
 use App\Models\City;
 use App\Models\PartCategory;
 use App\Models\Product;
+use App\Models\ProductFitment;
 use App\Models\Report;
 use App\Services\ProductSearch;
+use App\Support\PartCatalog;
 use App\Support\PriceWatch;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -25,11 +27,12 @@ class MarketplaceController extends Controller
             'filters' => $search->filters,
             'center' => $search->center,
             'currentCategory' => $search->category(),
-            'categories' => PartCategory::orderBy('position')->get(),
+            'categories' => PartCategory::tree(),
             'cities' => City::where('is_active', true)->orderBy('name')->with('neighborhoods:id,city_id,name')->get(),
             'vehicleTypes' => VehicleType::options(),
             'conditions' => feature('allow_used_parts') ? Product::CONDITIONS : [],
             'sorts' => ProductSearch::SORTS,
+            'makes' => collect(PartCatalog::MAKES)->merge(ProductFitment::distinct()->orderBy('make')->pluck('make'))->unique()->sort()->values(),
             // Raccourcis « pièces pour mon véhicule » à partir des véhicules enregistrés du client.
             'myVehicles' => $request->user()?->isClient() ? $request->user()->vehicles : collect(),
         ]);
@@ -38,7 +41,7 @@ class MarketplaceController extends Controller
     public function show(Request $request, Product $product): View
     {
         $user = $request->user();
-        $product->load(['photos', 'category', 'provider' => fn ($q) => $q->with('neighborhood', 'city', 'schedules', 'user')]);
+        $product->load(['photos', 'fitments', 'category.parent', 'provider' => fn ($q) => $q->with('neighborhood', 'city', 'schedules', 'user')]);
         $isOwner = $user && $product->provider->user_id === $user->id;
 
         // Même règle que les fiches prestataires : 404 si non visible, aperçu pour le vendeur et l'admin.

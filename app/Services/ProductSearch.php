@@ -7,6 +7,7 @@ use App\Models\City;
 use App\Models\Neighborhood;
 use App\Models\PartCategory;
 use App\Models\Product;
+use App\Models\ProductFitment;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -37,6 +38,10 @@ class ProductSearch
             'q' => trim((string) ($input['q'] ?? '')),
             'category' => is_string($input['category'] ?? null) ? $input['category'] : null,
             'vehicle' => VehicleType::tryFrom((string) ($input['vehicle'] ?? ''))?->value,
+            // Véhicule précis : marque, modèle, année (compatibilité structurée).
+            'make' => is_string($input['make'] ?? null) && trim($input['make']) !== '' ? mb_substr(trim($input['make']), 0, 40) : null,
+            'model' => is_string($input['model'] ?? null) && trim($input['model']) !== '' ? mb_substr(trim($input['model']), 0, 60) : null,
+            'year' => is_numeric($input['year'] ?? null) && $input['year'] >= 1960 && $input['year'] <= 2100 ? (int) $input['year'] : null,
             'condition' => in_array($input['condition'] ?? null, array_keys(Product::CONDITIONS), true) ? $input['condition'] : null,
             'in_stock' => filter_var($input['in_stock'] ?? false, FILTER_VALIDATE_BOOL),
             'price_min' => is_numeric($input['price_min'] ?? null) ? max(0, (int) $input['price_min']) : null,
@@ -80,7 +85,7 @@ class ProductSearch
             ->visible()
             ->select('products.*')
             ->join('providers', 'providers.id', '=', 'products.provider_id')
-            ->with(['photos', 'category:id,name,icon', 'provider' => fn ($q) => $q->with('neighborhood:id,name', 'city:id,name')]);
+            ->with(['photos', 'fitments', 'category:id,name,icon', 'provider' => fn ($q) => $q->with('neighborhood:id,name', 'city:id,name')]);
 
         if ($this->center) {
             $query->selectRaw(
@@ -98,7 +103,17 @@ class ProductSearch
         }
 
         if ($category = $this->category()) {
-            $query->where('products.part_category_id', $category->id);
+            $query->whereIn('products.part_category_id', $category->familyIds());
+        }
+
+        if ($f['make']) {
+            // Pièces déclarées compatibles, ou anciennes fiches dont le texte libre cite la marque (et le modèle).
+            $query->where(fn (Builder $q) => $q
+                ->whereHas('fitments', fn (Builder $fit) => ProductFitment::applyMatch($fit, $f['make'], $f['model'], $f['year']))
+                ->orWhere(fn (Builder $legacy) => $legacy
+                    ->whereDoesntHave('fitments')
+                    ->where('products.compatibility', 'ilike', '%'.$this->escape($f['make']).'%')
+                    ->when($f['model'], fn ($l) => $l->where('products.compatibility', 'ilike', '%'.$this->escape($f['model']).'%'))));
         }
 
         if ($f['vehicle']) {
@@ -129,7 +144,10 @@ class ProductSearch
                 ->where('products.name', 'ilike', $term)
                 ->orWhere('products.brand', 'ilike', $term)
                 ->orWhere('products.reference', 'ilike', $term)
-                ->orWhere('products.compatibility', 'ilike', $term));
+                ->orWhere('products.barcode', $word)
+                ->orWhere('products.compatibility', 'ilike', $term)
+                ->orWhereHas('fitments', fn (Builder $fit) => $fit->where(fn (Builder $w) => $w->where('make', 'ilike', $term)->orWhere('model', 'ilike', $term)))
+                ->orWhereHas('category', fn (Builder $c) => $c->where('name', 'ilike', $term)));
         }
 
         match ($f['sort']) {
@@ -148,6 +166,11 @@ class ProductSearch
         };
 
         return $query;
+    }
+
+    private function escape(string $value): string
+    {
+        return str_replace(['%', '_'], ['\%', '\_'], $value);
     }
 
     public function paginate(int $perPage = 24): LengthAwarePaginator

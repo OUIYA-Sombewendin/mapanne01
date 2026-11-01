@@ -42,7 +42,10 @@
         </select>
         <select name="category" class="input-sm">
             <option value="">Toutes catégories</option>
-            @foreach ($categories as $c) <option value="{{ $c->id }}" @selected(request('category') == $c->id)>{{ $c->name }}</option> @endforeach
+            @foreach ($categories as $c)
+                <option value="{{ $c->id }}" @selected(request('category') == $c->id)>{{ $c->name }}</option>
+                @foreach ($c->children as $sub) <option value="{{ $sub->id }}" @selected(request('category') == $sub->id)>&nbsp;&nbsp;› {{ $sub->name }}</option> @endforeach
+            @endforeach
         </select>
         <select name="condition" class="input-sm">
             <option value="">Neuf et occasion</option>

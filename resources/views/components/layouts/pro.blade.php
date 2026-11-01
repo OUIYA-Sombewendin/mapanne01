@@ -61,6 +61,7 @@
         'Gestion' => [
             ['pro.manage.index', 'chart', 'Vue d\'ensemble', $is('pro.manage.index'), $managing && $me->canShop('reports')],
             ['pro.manage.stock', 'layers', 'Stock', $is('pro.manage.stock*'), $managing && $sells && $me->canShop('stock')],
+            ['pro.manage.counts', 'document', 'Inventaire physique', $is('pro.manage.counts*'), $managing && $sells && $me->canShop('stock')],
             ['pro.manage.expenses.index', 'transfer', 'Dépenses', $is('pro.manage.expenses.*'), $managing && $me->canShop('expenses')],
             ['pro.manage.reports', 'history', 'Rapports', $is('pro.manage.reports*'), $managing && $me->canShop('reports')],
         ],
