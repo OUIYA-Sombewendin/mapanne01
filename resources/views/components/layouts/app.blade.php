@@ -28,6 +28,9 @@
                     <a href="{{ route('products.index') }}" @class(['rounded-lg px-3 py-2 hover:bg-ink-50', 'text-brand-600' => request()->routeIs('products.*', 'part-requests.*')])>Pièces détachées</a>
                 @endif
                 <a href="{{ route('search', ['type' => 'station']) }}" class="rounded-lg px-3 py-2 hover:bg-ink-50">Stations</a>
+                @if (feature('electric_page_enabled'))
+                    <a href="{{ route('electric') }}" @class(['rounded-lg px-3 py-2 hover:bg-ink-50', 'text-brand-600' => request()->routeIs('electric')])>⚡ Électrique</a>
+                @endif
                 <a href="{{ route('emergency') }}" class="rounded-lg px-3 py-2 text-red-600 hover:bg-red-50">Urgence</a>
             </nav>
 
@@ -44,6 +47,9 @@
                                 <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2 hover:bg-ink-50">Administration</a>
                             @elseif (auth()->user()->isProvider())
                                 <a href="{{ route('pro.dashboard') }}" class="block px-4 py-2 hover:bg-ink-50">Mon espace pro</a>
+                            @endif
+                            @if (auth()->user()->isClient() && feature('logbook_enabled'))
+                                <a href="{{ route('logbook.index') }}" class="block px-4 py-2 hover:bg-ink-50">🛠️ Mon carnet d'entretien</a>
                             @endif
                             <a href="{{ route('account.show') }}" class="block px-4 py-2 hover:bg-ink-50">Mon compte</a>
                             <form method="POST" action="{{ route('logout') }}">
@@ -109,6 +115,7 @@
                     <a href="{{ route('pages.show', $footerPage->slug) }}" class="hover:text-ink-700">{{ $footerPage->title }}</a>
                 @endforeach
                 <a href="{{ route('register', ['type' => 'pro']) }}" class="hover:text-ink-700">Inscrire mon activité</a>
+                @if (feature('electric_page_enabled')) <a href="{{ route('electric') }}" class="hover:text-ink-700">Moto et voiture électriques</a> @endif
                 <a href="{{ route('emergency') }}" class="hover:text-ink-700">Numéros d'urgence</a>
             </p>
         </div>

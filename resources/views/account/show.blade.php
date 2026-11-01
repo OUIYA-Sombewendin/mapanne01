@@ -9,42 +9,35 @@
 
     <div class="grid gap-5 lg:grid-cols-2">
         @if ($user->isClient())
-            {{-- Véhicules --}}
+            {{-- Véhicules et carnet d'entretien --}}
             <section class="card p-5">
-                <h2 class="mb-3 font-bold">🚗 Mes véhicules</h2>
+                <div class="mb-3 flex items-center justify-between gap-2">
+                    <h2 class="font-bold">🚗 Mes véhicules</h2>
+                    @if (feature('logbook_enabled') && $user->vehicles->isNotEmpty())
+                        <a href="{{ route('logbook.index') }}" class="btn btn-primary btn-sm">🛠️ Mon carnet d'entretien</a>
+                    @endif
+                </div>
                 <ul class="mb-4 divide-y divide-ink-50">
                     @forelse ($user->vehicles as $vehicle)
-                        <li class="flex items-center justify-between py-2 text-sm">
-                            <span><span class="chip mr-1 bg-ink-50 text-ink-600">{{ $vehicle->type->label() }}</span> {{ $vehicle->title() }}
-                                @if ($vehicle->plate) <span class="text-ink-400">· {{ $vehicle->plate }}</span> @endif
+                        <li class="flex items-center justify-between gap-2 py-2 text-sm">
+                            <span>{{ $vehicle->icon() }} {{ $vehicle->title() }}
+                                <span class="text-ink-400">· {{ $vehicle->type->label() }}{{ $vehicle->isElectric() ? ' électrique' : '' }}{{ $vehicle->plate ? ' · '.$vehicle->plate : '' }}</span>
                             </span>
-                            <form method="POST" action="{{ route('vehicles.destroy', $vehicle) }}" onsubmit="return confirm('Supprimer ce véhicule ?')">
-                                @csrf @method('DELETE')
-                                <button class="text-xs text-red-600">Supprimer</button>
-                            </form>
+                            <span class="flex shrink-0 items-center gap-3">
+                                @if (feature('logbook_enabled')) <a href="{{ route('logbook.show', $vehicle) }}" class="text-xs font-semibold text-accent-700">Carnet</a> @endif
+                                <form method="POST" action="{{ route('vehicles.destroy', $vehicle) }}" onsubmit="return confirm('Supprimer ce véhicule ?')">
+                                    @csrf @method('DELETE')
+                                    <button class="text-xs text-red-600">Supprimer</button>
+                                </form>
+                            </span>
                         </li>
                     @empty
-                        <li class="py-2 text-sm text-ink-400">Aucun véhicule enregistré.</li>
+                        <li class="py-2 text-sm text-ink-400">Aucun véhicule enregistré.@if (feature('logbook_enabled')) Ajoutez-en un pour recevoir les rappels de vidange, d'assurance et de visite technique.@endif</li>
                     @endforelse
                 </ul>
-                <details @if ($errors->hasAny(['type', 'brand', 'model', 'year', 'plate'])) open @endif>
+                <details @if ($errors->hasAny(['type', 'energy', 'brand', 'model', 'year', 'plate'])) open @endif>
                     <summary class="btn btn-ghost btn-sm cursor-pointer">+ Ajouter un véhicule</summary>
-                    <form method="POST" action="{{ route('vehicles.store') }}" class="mt-3 grid grid-cols-2 gap-3">
-                        @csrf
-                        <div>
-                            <label class="field-label" for="type">Type</label>
-                            <select id="type" name="type" class="input" required>
-                                @foreach ($vehicleTypes as $value => $label)
-                                    <option value="{{ $value }}" @selected(old('type') === $value)>{{ $label }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <x-field name="brand" label="Marque" placeholder="Toyota, Yamaha…" required />
-                        <x-field name="model" label="Modèle" />
-                        <x-field name="year" type="number" label="Année" />
-                        <x-field name="plate" label="Immatriculation" class="col-span-2" />
-                        <button class="btn btn-primary col-span-2">Enregistrer</button>
-                    </form>
+                    <div class="mt-3">@include('account.logbook._vehicle-form', ['vehicle' => null])</div>
                 </details>
             </section>
 

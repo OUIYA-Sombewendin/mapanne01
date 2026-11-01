@@ -158,7 +158,6 @@ class SettingsRegistry
                     'home_highlight' => ['type' => 'string', 'label' => 'Titre en couleur', 'default' => 'Trouvez de l\'aide près de vous.'],
                     'home_subtitle' => ['type' => 'text', 'label' => 'Sous-titre', 'default' => 'Mécaniciens, garages, dépanneurs, stations-service et vendeurs de pièces contrôlés par l\'équipe MaPanne.'],
                     'home_show_featured' => ['type' => 'bool', 'label' => 'Afficher les prestataires à la une et les mieux notés', 'default' => true],
-                    'home_show_steps' => ['type' => 'bool', 'label' => 'Afficher « Comment ça marche »', 'default' => true],
                     'home_show_plans' => ['type' => 'bool', 'label' => 'Afficher les offres pour les professionnels (si les abonnements sont activés)', 'default' => true],
                     'home_problems' => ['type' => 'pairs', 'label' => 'Raccourcis « Problèmes fréquents » (code du service | libellé)', 'default' => [
                         'crevaison-vulcanisation' => '🛞 Crevaison',
@@ -229,6 +228,16 @@ class SettingsRegistry
                     'assist_radius_km' => ['type' => 'int', 'label' => 'Rayon de recherche des prestataires (km)', 'default' => 10],
                     'assist_max_providers' => ['type' => 'int', 'label' => 'Nombre maximum de prestataires prévenus par demande', 'default' => 15],
                     'assist_expire_minutes' => ['type' => 'int', 'label' => 'Délai avant qu\'une demande sans réponse soit fermée (minutes)', 'default' => 45],
+                ],
+            ],
+            'vehicles' => [
+                'label' => 'Carnet d\'entretien et électrique',
+                'icon' => '⚡',
+                'settings' => [
+                    'logbook_enabled' => ['type' => 'bool', 'label' => 'Carnet d\'entretien pour les clients (rappels de vidange, assurance, visite technique…)', 'default' => true],
+                    'logbook_reminders_enabled' => ['type' => 'bool', 'label' => 'Envoyer les rappels d\'entretien (email et notification push) 7 jours avant l\'échéance', 'default' => true],
+                    'electric_page_enabled' => ['type' => 'bool', 'label' => 'Page « Moto et voiture électriques » (spécialistes, points de recharge, conseils)', 'default' => true],
+                    'electric_intro' => ['type' => 'text', 'label' => 'Texte d\'introduction de la page électrique', 'default' => 'Motos et voitures électriques arrivent au Burkina Faso, mais peu de réparateurs savent les entretenir. Trouvez ici les spécialistes vérifiés, les points de recharge et d\'échange de batterie, et les bons gestes en cas de panne.'],
                 ],
             ],
             'emergency' => [

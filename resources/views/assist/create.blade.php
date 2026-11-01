@@ -12,7 +12,7 @@
         </section>
 
         <form method="POST" action="{{ route('assist.store') }}" class="mt-5 space-y-6"
-              x-data="assistForm(@js(['vehicle' => old('vehicle_type'), 'energy' => old('energy'), 'problem' => old('problem'), 'lat' => old('latitude'), 'lng' => old('longitude')]))">
+              x-data="assistForm(@js(['vehicle' => old('vehicle_type', request('vehicle')), 'energy' => old('energy', request('energy')), 'problem' => old('problem', request('problem')), 'lat' => old('latitude'), 'lng' => old('longitude')]))">
             @csrf
 
             {{-- 1. Véhicule --}}

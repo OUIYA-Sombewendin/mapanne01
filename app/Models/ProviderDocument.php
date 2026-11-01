@@ -15,6 +15,7 @@ class ProviderDocument extends Model
     public const KINDS = [
         'identity' => ['Pièce d\'identité (CNIB ou passeport)', '✓ Identité vérifiée', 'identity_verified_at', 'Photo lisible du recto de la CNIB du responsable.'],
         'business' => ['Registre du commerce (RCCM) ou IFU', '🏢 Entreprise vérifiée', 'business_verified_at', 'Document officiel au nom de l\'établissement.'],
+        'electric' => ['Preuve de travail sur l\'électrique', '⚡ Spécialiste électrique', 'ev_verified_at', 'Photo d\'une réparation de moto ou voiture électrique dans votre atelier, ou attestation de formation.'],
         'workshop' => ['Photo de l\'atelier ou de la boutique', '📍 Adresse vérifiée', 'workshop_verified_at', 'Photo de la devanture avec l\'enseigne, prise sur place.'],
     ];
 

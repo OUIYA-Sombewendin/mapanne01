@@ -25,6 +25,7 @@
                 ['admin.providers.index', [], request()->routeIs('admin.providers.*') && ! $typeParam, 'providers', 'Inscriptions et fiches', $todo['providers'] + $todo['review'], $me->can('providers.view')],
                 ['admin.verifications.index', [], request()->routeIs('admin.verifications.*'), 'shield', 'Justificatifs', $todo['documents'] ?: null, $me->can('providers.view')],
                 ['admin.assist.index', [], request()->routeIs('admin.assist.*'), 'phone', 'Dépannages en direct', $todo['assist'] ?: null, $me->can('providers.view') && feature('assist_enabled')],
+                ['admin.charge-points.index', [], request()->routeIs('admin.charge-points.*'), 'emoji:⚡', 'Points de recharge', null, $me->can('providers.manage') && feature('electric_page_enabled')],
             ],
             \App\Models\ProviderType::cached()->where('is_active', true)->values()->map(fn ($t) => [
                 'admin.trades.show', ['type' => $t->slug], (request()->routeIs('admin.trades.*') && request()->route('type')?->slug === $t->slug) || $typeParam === $t->slug, 'emoji:'.$t->icon(), $t->shortLabel(), null, $me->can('providers.view'),

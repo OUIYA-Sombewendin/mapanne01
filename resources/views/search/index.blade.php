@@ -76,6 +76,7 @@
                 <label class="chip chip-filter px-3 py-2 text-sm"><input type="checkbox" name="available" value="1" class="sr-only" @checked($filters['available'])>⚡ Disponible</label>
                 <label class="chip chip-filter px-3 py-2 text-sm"><input type="checkbox" name="night" value="1" class="sr-only" @checked($filters['night'])>🌙 Service de nuit</label>
                 <label class="chip chip-filter px-3 py-2 text-sm"><input type="checkbox" name="verified" value="1" class="sr-only" @checked($filters['verified'])>✓ Vérifiés</label>
+                <label class="chip chip-filter px-3 py-2 text-sm"><input type="checkbox" name="electric" value="1" class="sr-only" @checked($filters['electric'])>⚡ Spécialiste électrique</label>
             </div>
 
             <div class="flex justify-end gap-2">

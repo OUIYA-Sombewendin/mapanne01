@@ -64,6 +64,7 @@ class Provider extends Model
             'identity_verified_at' => 'datetime',
             'business_verified_at' => 'datetime',
             'workshop_verified_at' => 'datetime',
+            'ev_verified_at' => 'datetime',
             'rating_avg' => 'float',
             'is_featured' => 'boolean',
             'needs_review' => 'boolean',

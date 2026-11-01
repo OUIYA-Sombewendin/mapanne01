@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Account;
 
-use App\Enums\VehicleType;
 use App\Http\Controllers\Controller;
 use App\Models\City;
 use App\Rules\BurkinaPhone;
@@ -27,7 +26,6 @@ class AccountController extends Controller
             'user' => $user,
             'favorites' => $user->favorites()->visible()->with('neighborhood:id,name')->latest('favorites.created_at')->get(),
             'reviews' => $user->reviews()->with('provider:id,business_name,slug')->latest()->get(),
-            'vehicleTypes' => VehicleType::options(),
             'cities' => City::where('is_active', true)->orderBy('name')->with('neighborhoods:id,city_id,name')->get(),
         ]);
     }

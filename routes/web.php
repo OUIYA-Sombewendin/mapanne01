@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\TwoFactorController;
 use App\Http\Controllers\Auth\VerificationController;
+use App\Http\Controllers\ElectricController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MarketplaceController;
 use App\Http\Controllers\PageController;
@@ -26,6 +27,7 @@ Route::get('/recherche', SearchController::class)->name('search');
 Route::get('/prestataires/{provider}', [ProviderController::class, 'show'])->name('providers.show');
 Route::post('/prestataires/{provider}/contact', [ProviderController::class, 'contact'])->middleware('throttle:30,1')->name('providers.contact');
 Route::view('/urgence', 'pages.emergency')->name('emergency');
+Route::get('/electrique', ElectricController::class)->middleware('feature:electric_page_enabled')->name('electric');
 
 // Dépannage en direct : le conducteur envoie sa position, les pros proches sont prévenus.
 Route::middleware('feature:assist_enabled')->group(function () {
@@ -93,7 +95,17 @@ Route::middleware('auth')->group(function () {
             Route::delete('/prestataires/{provider}/avis', [ReviewController::class, 'destroy'])->name('reviews.destroy');
             Route::post('/prestataires/{provider}/favori', [Account\FavoriteController::class, 'toggle'])->name('favorites.toggle');
             Route::post('/mon-compte/vehicules', [Account\VehicleController::class, 'store'])->name('vehicles.store');
+            Route::put('/mon-compte/vehicules/{vehicle}', [Account\VehicleController::class, 'update'])->name('vehicles.update');
             Route::delete('/mon-compte/vehicules/{vehicle}', [Account\VehicleController::class, 'destroy'])->name('vehicles.destroy');
+
+            // Carnet d'entretien
+            Route::middleware('feature:logbook_enabled')->group(function () {
+                Route::get('/mon-carnet', [Account\LogbookController::class, 'index'])->name('logbook.index');
+                Route::get('/mon-carnet/{vehicle}', [Account\LogbookController::class, 'show'])->name('logbook.show');
+                Route::put('/mon-carnet/{vehicle}/rappels', [Account\LogbookController::class, 'reminders'])->name('logbook.reminders');
+                Route::post('/mon-carnet/{vehicle}/entretiens', [Account\LogbookController::class, 'storeLog'])->name('logbook.logs.store');
+                Route::delete('/mon-carnet/{vehicle}/entretiens/{log}', [Account\LogbookController::class, 'destroyLog'])->name('logbook.logs.destroy');
+            });
 
             Route::middleware(['feature:marketplace_enabled', 'feature:part_requests_enabled'])->group(function () {
                 Route::get('/mes-demandes', [PartRequestController::class, 'index'])->name('part-requests.index');
@@ -244,6 +256,10 @@ Route::middleware('auth')->group(function () {
             Route::put('/prestataires/{provider}', [Admin\ProviderController::class, 'update'])->name('providers.update');
             Route::post('/depannages/{assist}/fermer', [Admin\AssistController::class, 'close'])->name('assist.close');
             Route::post('/verifications/{document}', [Admin\VerificationController::class, 'review'])->name('verifications.review');
+            Route::get('/points-electriques', [Admin\ChargePointController::class, 'index'])->name('charge-points.index');
+            Route::post('/points-electriques', [Admin\ChargePointController::class, 'store'])->name('charge-points.store');
+            Route::put('/points-electriques/{point}', [Admin\ChargePointController::class, 'update'])->name('charge-points.update');
+            Route::delete('/points-electriques/{point}', [Admin\ChargePointController::class, 'destroy'])->name('charge-points.destroy');
             Route::post('/prestataires/{provider}/valider', [Admin\ProviderController::class, 'approve'])->name('providers.approve');
             Route::post('/prestataires/{provider}/refuser', [Admin\ProviderController::class, 'reject'])->name('providers.reject');
             Route::post('/prestataires/{provider}/suspendre', [Admin\ProviderController::class, 'suspend'])->name('providers.suspend');

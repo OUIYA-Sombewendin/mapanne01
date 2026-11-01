@@ -10,11 +10,11 @@
         </div>
     </section>
 
-    <div class="mt-6 grid gap-5 lg:grid-cols-3">
+    <div class="mt-6 grid gap-5 md:grid-cols-2">
         @foreach ($kinds as $kind => [$label, $badge, $column, $help])
             @php($doc = $documents[$kind] ?? null)
             <section class="card flex flex-col p-6">
-                @include('pro._section-head', ['icon' => $kind === 'identity' ? 'users' : ($kind === 'business' ? 'document' : 'map'), 'title' => $label, 'text' => $help])
+                @include('pro._section-head', ['icon' => ['identity' => 'users', 'business' => 'document', 'electric' => 'wrench'][$kind] ?? 'map', 'title' => $label, 'text' => $help])
 
                 @if ($provider->{$column})
                     <p class="rounded-xl bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{{ $badge }} depuis le {{ $provider->{$column}->format('d/m/Y') }}</p>

@@ -14,11 +14,33 @@
                 <p class="mt-4 max-w-xl text-ink-200 md:text-lg">{{ setting('home_subtitle') }}</p>
 
                 @if (feature('assist_enabled'))
-                    <a href="{{ route('assist.create') }}" class="mt-6 flex max-w-xl items-center gap-4 rounded-2xl bg-red-600 px-5 py-4 shadow-xl shadow-red-900/30 transition hover:bg-red-500">
-                        <span class="text-3xl">🆘</span>
-                        <span class="flex-1"><span class="block text-lg font-extrabold">Je suis en panne</span><span class="block text-sm text-white/85">Envoyez votre position : les pros les plus proches sont prévenus.</span></span>
-                        <span class="text-2xl">→</span>
-                    </a>
+                    {{-- Panne : le véhicule d'abord, puis le problème → demande de dépannage pré-remplie --}}
+                    <div class="mt-6 max-w-xl overflow-hidden rounded-2xl bg-red-600 shadow-xl shadow-red-900/30"
+                         x-data="{ vehicle: 'moto', energy: 'thermique', pick(v, e) { this.vehicle = v; this.energy = e } }">
+                        <a :href="@js(route('assist.create')) + '?vehicle=' + vehicle + '&energy=' + energy" class="flex items-center gap-4 px-5 pt-4 pb-3 transition hover:bg-red-500">
+                            <span class="text-3xl">🆘</span>
+                            <span class="flex-1"><span class="block text-lg font-extrabold">Je suis en panne</span><span class="block text-sm text-white/85">Les pros les plus proches sont prévenus tout de suite.</span></span>
+                            <span class="text-2xl">→</span>
+                        </a>
+                        <div class="bg-red-700/60 px-4 pt-3 pb-4">
+                            <div class="grid grid-cols-3 gap-2 text-[13px] font-semibold sm:text-sm">
+                                @foreach ([['moto', 'thermique', '🛵', 'Moto'], ['voiture', 'thermique', '🚗', 'Voiture'], ['moto', 'electrique', '⚡', 'Électrique']] as [$v, $e, $icon, $label])
+                                    <button type="button" @click="pick(@js($v), @js($e))"
+                                            :class="vehicle === @js($v) && energy === @js($e) ? 'bg-white text-red-700' : 'bg-white/10 text-white hover:bg-white/20'"
+                                            class="rounded-xl px-2 py-2 whitespace-nowrap transition">{{ $icon }} {{ $label }}</button>
+                                @endforeach
+                            </div>
+                            <div class="mt-3 flex flex-wrap gap-1.5">
+                                @foreach ($assistProblems as $key => $problem)
+                                    <a :href="@js(route('assist.create')) + '?vehicle=' + vehicle + '&energy=' + energy + '&problem={{ $key }}'"
+                                       @if (! empty($problem['electric'])) x-show="energy === 'electrique'" @endif
+                                       @if (! empty($problem['fuel'])) x-show="energy !== 'electrique'" @endif
+                                       @if ($key === 'transport_moto') x-show="vehicle === 'moto'" @endif
+                                       class="rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium ring-1 ring-white/20 hover:bg-white hover:text-red-700">{{ $problem['icon'] }} {{ $problem['label'] }}</a>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
                 @endif
 
                 <form action="{{ route('search') }}" method="GET" class="mt-6 max-w-xl rounded-2xl bg-white p-3 text-ink-900 shadow-2xl shadow-black/30" x-data="geoSearch">
@@ -81,7 +103,7 @@
     {{-- Problèmes fréquents → service --}}
     @if ($problems)
         <section class="mt-10">
-            <h2 class="mb-3 text-lg font-bold">Quel est votre problème ?</h2>
+            <h2 class="mb-3 text-lg font-bold">{{ feature('assist_enabled') ? 'Besoin d’un entretien ou d’une réparation ?' : 'Quel est votre problème ?' }}</h2>
             <div class="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2">
                 @foreach ($problems as $slug => $label)
                     <a href="{{ route('search', ['service' => $slug]) }}" class="chip shrink-0 border border-ink-200 bg-white px-4 py-2.5 text-sm text-ink-700 shadow-sm hover:border-brand-300 hover:text-brand-700">{{ $label }}</a>
@@ -109,24 +131,34 @@
         </section>
     @endif
 
-    {{-- Comment ça marche --}}
-    @if (feature('home_show_steps'))
-        <section class="mt-12">
-            <h2 class="mb-4 text-center text-2xl font-extrabold">Comment ça marche ?</h2>
-            <div class="grid gap-4 md:grid-cols-3">
-                @foreach ([
-                    ['📍', 'Dites où vous êtes', 'Activez la localisation ou choisissez votre quartier. Aucune inscription nécessaire.'],
-                    ['🔎', 'Comparez', 'Distance, horaires, ouvert maintenant, avis de vrais clients et badges de confiance.'],
-                    ['📞', 'Contactez directement', 'Appel ou WhatsApp en un geste. Vous payez le professionnel directement.'],
-                ] as $i => [$icon, $title, $text])
-                    <div class="card relative p-6">
-                        <span class="absolute top-5 right-5 text-5xl font-extrabold text-ink-100">{{ $i + 1 }}</span>
-                        <span class="flex size-12 items-center justify-center rounded-2xl bg-brand-50 text-2xl">{{ $icon }}</span>
-                        <h3 class="mt-4 font-bold">{{ $title }}</h3>
-                        <p class="mt-1 text-sm text-ink-500">{{ $text }}</p>
+    {{-- Électrique et carnet d'entretien --}}
+    @if (feature('electric_page_enabled') || feature('logbook_enabled'))
+        <section @class(['mt-12 grid gap-4', 'lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]' => feature('electric_page_enabled') && feature('logbook_enabled')])>
+            @if (feature('electric_page_enabled'))
+                <a href="{{ route('electric') }}" class="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-800 to-ink-900 p-6 text-white md:p-8">
+                    <div class="pointer-events-none absolute -right-10 -bottom-16 size-64 rounded-full bg-emerald-400/20 blur-2xl"></div>
+                    <p class="text-xs font-bold tracking-widest text-emerald-300 uppercase">Nouveau</p>
+                    <h2 class="mt-1 text-2xl font-extrabold md:text-3xl">⚡ Moto ou voiture électrique ?</h2>
+                    <p class="mt-2 max-w-lg text-sm text-white/80">Réparateurs spécialisés vérifiés, points de recharge et d'échange de batterie, pannes fréquentes et bons gestes : tout est au même endroit.</p>
+                    <div class="mt-4 flex flex-wrap items-center gap-5 text-sm">
+                        <p><span class="block text-2xl font-extrabold">{{ $stats['electric'] }}</span>spécialiste(s)</p>
+                        <p><span class="block text-2xl font-extrabold">{{ $stats['chargePoints'] }}</span>point(s) de recharge</p>
+                        <span class="btn ml-auto bg-white text-ink-900 group-hover:bg-emerald-50">Découvrir →</span>
                     </div>
-                @endforeach
-            </div>
+                </a>
+            @endif
+            @if (feature('logbook_enabled') && (! auth()->check() || auth()->user()->isClient()))
+                <div class="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-ink-100 md:p-8">
+                    <h2 class="text-xl font-extrabold">🛠️ Ne ratez plus une vidange</h2>
+                    <p class="mt-2 text-sm text-ink-500">Carnet d'entretien gratuit pour votre moto ou votre voiture : rappels de vidange, d'assurance et de visite technique, et l'historique de vos réparations.</p>
+                    <ul class="mt-3 space-y-1 text-sm">
+                        <li>✓ Rappel 7 jours avant l'échéance</li>
+                        <li>✓ Un entretien noté en 10 secondes</li>
+                        <li>✓ Ce que vous avez dépensé, par an</li>
+                    </ul>
+                    <a href="{{ auth()->check() ? route('logbook.index') : route('register') }}" class="btn btn-primary mt-4">{{ auth()->check() ? 'Ouvrir mon carnet' : 'Créer mon carnet gratuit' }}</a>
+                </div>
+            @endif
         </section>
     @endif
 
@@ -172,9 +204,9 @@
     {{-- Confiance --}}
     <section class="mt-12 grid gap-3 md:grid-cols-3">
         @foreach ([
-            ['✓', 'Prestataires vérifiés', 'Chaque professionnel est contrôlé par notre équipe avant d\'apparaître.'],
+            ['✓', 'Prestataires vérifiés', 'Chaque fiche est contrôlée avant d\'apparaître ; les badges confirment l\'identité, l\'entreprise et l\'adresse.'],
             ['★', 'Avis de vrais clients', 'Un seul avis par client et par prestataire, modéré pour éviter les faux avis.'],
-            ['🚩', 'Signalement en un clic', 'Numéro faux, arnaque, établissement fermé : l\'équipe intervient rapidement.'],
+            ['📞', 'Contact direct, sans frais', 'Appel ou WhatsApp en un geste, sans inscription. Vous payez le professionnel directement.'],
         ] as [$icon, $title, $text])
             <div class="flex gap-4 rounded-2xl p-4">
                 <span class="flex size-11 shrink-0 items-center justify-center rounded-xl bg-ink-800 text-lg text-white">{{ $icon }}</span>

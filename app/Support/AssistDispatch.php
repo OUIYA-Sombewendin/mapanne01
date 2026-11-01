@@ -43,6 +43,8 @@ class AssistDispatch
                 ->where('availability', '!=', Availability::Offline)
                 ->near($request->latitude, $request->longitude, $km)
                 ->with('user')
+                // Véhicule électrique : les spécialistes vérifiés sont prévenus en priorité.
+                ->when($request->energy === 'electrique', fn ($q) => $q->orderByRaw('ev_verified_at IS NULL'))
                 ->orderBy('distance_m')
                 ->limit(max(1, (int) setting('assist_max_providers', 15)))
                 ->get();
