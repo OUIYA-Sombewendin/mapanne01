@@ -40,12 +40,12 @@ class AppServiceProvider extends ServiceProvider
         });
 
         // Couleurs choisies dans Admin › Apparence, injectées dans toutes les mises en page.
-        View::composer(['components.layouts.app', 'components.layouts.admin', 'components.layouts.pro', 'pro.invoices.print'], function ($view) {
+        View::composer(['components.layouts.app', 'components.layouts.client', 'components.layouts.auth', 'components.layouts.admin', 'components.layouts.pro', 'pro.invoices.print'], function ($view) {
             $view->with('themeCss', Theme::css());
         });
 
         // Pages de contenu (CGU, confidentialité…) listées dans le pied de page.
-        View::composer('components.layouts.app', function ($view) {
+        View::composer(['components.layouts.app', 'components.layouts.auth'], function ($view) {
             $view->with('footerPages', Page::footer());
         });
 

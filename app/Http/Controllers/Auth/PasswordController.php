@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Support\Delivery;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,6 +25,9 @@ class PasswordController extends Controller
     public function email(Request $request): RedirectResponse
     {
         $request->validate(['email' => ['required', 'email']]);
+        if (! Delivery::mailReady()) {
+            return back()->withInput()->withErrors(['email' => Delivery::mailFailedMessage('Le lien de réinitialisation')]);
+        }
 
         try {
             Password::sendResetLink(['email' => Str::lower(trim($request->input('email')))]);

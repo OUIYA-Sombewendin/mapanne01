@@ -53,7 +53,9 @@ class RegisterController extends Controller
         $message = $user->isProvider()
             ? 'Bienvenue ! Votre fiche est en attente de validation. Complétez-la pour accélérer la vérification.'
             : 'Bienvenue sur MaPanne !';
-        $message .= ' Un email de confirmation vous a été envoyé.';
+        $message .= $user->confirmationSent
+            ? ' Un email de confirmation vous a été envoyé.'
+            : ' L\'email de confirmation n\'a pas pu être envoyé pour le moment : vous pourrez le renvoyer depuis votre espace.';
 
         return redirect($user->homeRoute())->with('success', $message);
     }
@@ -136,7 +138,7 @@ class RegisterController extends Controller
         });
 
         // Les envois d'emails ne doivent jamais bloquer l'inscription (Notifier journalise les échecs).
-        Notifier::send($user, new VerifyEmail);
+        $user->confirmationSent = Notifier::send($user, new VerifyEmail);
         if ($user->isProvider() && filled(setting('admin_notification_email'))) {
             Notifier::sendTo(setting('admin_notification_email'), new NewProviderRegistered($user->provider), 'notify_admin_new_provider');
         }

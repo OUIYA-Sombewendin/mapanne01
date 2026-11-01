@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Account;
 
+use App\Enums\VehicleType;
 use App\Http\Controllers\Controller;
 use App\Models\AssistRequest;
 use App\Models\Provider;
 use App\Models\Vehicle;
 use App\Models\VehicleLog;
+use App\Models\VehicleReminder;
 use App\Support\MaintenanceTasks;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,7 +32,7 @@ class LogbookController extends Controller
 
         return view('account.logbook.index', [
             'vehicles' => $vehicles,
-            'vehicleTypes' => \App\Enums\VehicleType::options(),
+            'vehicleTypes' => VehicleType::options(),
             'energies' => MaintenanceTasks::energies(),
         ]);
     }
@@ -89,7 +91,7 @@ class LogbookController extends Controller
         }
         $vehicle->reminders()->whereNotIn('task', $kept)->delete();
 
-        return back()->with('success', count($kept) ? count($kept).' rappel(s) enregistré(s). Vous serez prévenu '.\App\Models\VehicleReminder::NOTICE_DAYS.' jours avant.' : 'Rappels désactivés.');
+        return back()->with('success', count($kept) ? count($kept).' rappel(s) enregistré(s). Vous serez prévenu '.VehicleReminder::NOTICE_DAYS.' jours avant.' : 'Rappels désactivés.');
     }
 
     public function storeLog(Request $request, Vehicle $vehicle): RedirectResponse

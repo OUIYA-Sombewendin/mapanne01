@@ -32,12 +32,12 @@ class TwoFactor
         self::send($user);
     }
 
-    public static function send(User $user): void
+    public static function send(User $user): bool
     {
         $code = (string) random_int(100000, 999999);
         Cache::put(self::key($user), ['hash' => Hash::make($code), 'attempts' => 0], now()->addMinutes(self::TTL_MINUTES));
 
-        Notifier::send($user, new SimpleMessage(
+        return Notifier::send($user, new SimpleMessage(
             'Votre code de connexion '.setting('site_name').' : '.$code,
             [
                 'Code de vérification : '.$code,

@@ -214,6 +214,7 @@ class AdminSettingsTest extends TestCase
     public function test_password_reset_by_email(): void
     {
         Notification::fake();
+        config(['mail.default' => 'smtp', 'mail.mailers.smtp.host' => 'smtp.exemple.bf']); // serveur d'envoi configuré
         $user = User::factory()->create(['email' => 'oubli@exemple.bf']);
 
         $this->post('/mot-de-passe-oublie', ['email' => 'oubli@exemple.bf'])->assertSessionHas('success');

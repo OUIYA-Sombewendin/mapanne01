@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\User;
+use App\Support\Delivery;
 use App\Support\TwoFactor;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -54,9 +55,10 @@ class TwoFactorController extends Controller
         if (! $user) {
             return redirect()->route('login');
         }
-        TwoFactor::send($user);
 
-        return back()->with('success', 'Un nouveau code vous a été envoyé.');
+        return TwoFactor::send($user)
+            ? back()->with('success', 'Un nouveau code vous a été envoyé.')
+            : back()->with('error', Delivery::mailFailedMessage('Le code'));
     }
 
     private function pendingUser(Request $request): ?User

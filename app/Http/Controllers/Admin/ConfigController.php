@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Setting;
 use App\Notifications\SimpleMessage;
+use App\Support\Delivery;
 use App\Support\ImageOptimizer;
 use App\Support\MailConfigurator;
 use App\Support\SettingsRegistry;
@@ -110,7 +111,12 @@ class ConfigController extends Controller
             return back()->withErrors(['email' => 'Échec de l\'envoi : '.$e->getMessage()]);
         }
 
-        return back()->with('success', 'Email de test envoyé à '.$email.' (mode : '.config('mail.default').').');
+        // En mode « journal », rien n'est parti : on le dit clairement.
+        if (! Delivery::mailReady()) {
+            return back()->with('error', 'Aucun email n\'est parti : le mode d\'envoi est « '.config('mail.default').' » (écrit dans storage/logs seulement). Choisissez SMTP et saisissez les accès de votre fournisseur.');
+        }
+
+        return back()->with('success', 'Email de test envoyé à '.$email.' (mode : '.config('mail.default').'). Vérifiez la boîte de réception et les spams.');
     }
 
     private function rules(array $definitions): array

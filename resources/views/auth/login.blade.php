@@ -1,9 +1,9 @@
-<x-layouts.app title="Connexion">
+<x-layouts.auth title="Connexion">
     <div class="mx-auto max-w-sm">
         <div class="mb-6 text-center">
             <x-logo class="mx-auto size-12" />
             <h1 class="mt-3 text-2xl font-extrabold">Bon retour !</h1>
-            <p class="text-sm text-ink-500">Connectez-vous avec votre adresse email.</p>
+            <p class="text-sm text-ink-500">{{ feature('login_with_phone_enabled') ? 'Connectez-vous avec votre email ou votre numéro de téléphone.' : 'Connectez-vous avec votre adresse email.' }}</p>
         </div>
 
         <form method="POST" action="{{ route('login') }}" class="card space-y-4 p-5">
@@ -24,4 +24,4 @@
             Pas encore de compte ? <a href="{{ route('register') }}" class="font-semibold text-brand-600">Créer un compte</a>
         </p>
     </div>
-</x-layouts.app>
+</x-layouts.auth>

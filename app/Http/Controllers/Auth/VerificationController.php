@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Support\Delivery;
 use App\Support\Notifier;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
@@ -28,10 +29,12 @@ class VerificationController extends Controller
 
     public function resend(Request $request): RedirectResponse
     {
-        if (! $request->user()->hasVerifiedEmail()) {
-            Notifier::send($request->user(), new VerifyEmail);
+        if ($request->user()->hasVerifiedEmail()) {
+            return back()->with('success', 'Votre adresse email est déjà confirmée.');
         }
 
-        return back()->with('success', 'Un nouveau lien de confirmation vient d\'être envoyé.');
+        return Notifier::send($request->user(), new VerifyEmail)
+            ? back()->with('success', 'Un nouveau lien de confirmation vient d\'être envoyé à '.$request->user()->email.'.')
+            : back()->with('error', Delivery::mailFailedMessage('Le lien de confirmation'));
     }
 }

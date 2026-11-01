@@ -1,4 +1,8 @@
 @props(['title' => null, 'description' => null, 'wide' => false, 'bare' => false])
+{{-- Client connecté : toutes les pages s'affichent dans son espace (menu latéral, barre du bas). --}}
+@if (auth()->user()?->isClient())
+<x-layouts.client :title="$title" :description="$description" :wide="$wide">{{ $slot }}</x-layouts.client>
+@else
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -148,3 +152,4 @@
     </nav>
 </body>
 </html>
+@endif

@@ -25,6 +25,9 @@ class User extends Authenticatable implements MustVerifyEmail
 
     use HasPushSubscriptions, Lockable;
 
+    /** L'email de confirmation de l'inscription est-il vraiment parti ? (non enregistré en base) */
+    public bool $confirmationSent = false;
+
     /**
      * Le rôle et le statut actif ne sont jamais assignables en masse :
      * ils ne changent que par du code explicite (inscription, administration).
@@ -212,7 +215,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return match ($this->role) {
             UserRole::Admin => route('admin.dashboard'),
             UserRole::Provider => route('pro.dashboard'),
-            default => route('account.show'),
+            default => route('account.space'),
         };
     }
 

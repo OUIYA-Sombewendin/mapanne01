@@ -119,6 +119,21 @@
             @endif
 
             @if ($current === 'mail')
+                {{-- État réel des envois : ce qui part vraiment, et ce qui reste bloqué --}}
+                <section class="card p-5">
+                    <h2 class="mb-1 font-bold">État des envois</h2>
+                    <p class="mb-3 text-sm text-ink-500">Tant qu'un canal est en rouge, le site n'annonce pas « envoyé » aux utilisateurs pour ce canal.</p>
+                    <ul class="divide-y divide-ink-50">
+                        @foreach (\App\Support\Delivery::status() as [$channel, $ok, $detail])
+                            <li class="flex flex-wrap items-start gap-3 py-2.5 text-sm">
+                                <span class="w-44 shrink-0 font-semibold">{{ $channel }}</span>
+                                <span @class(['chip shrink-0', 'bg-emerald-100 text-emerald-800' => $ok, 'bg-red-100 text-red-800' => ! $ok])>{{ $ok ? 'En service' : 'Inactif' }}</span>
+                                <span class="min-w-0 flex-1 text-ink-600">{{ $detail }}</span>
+                            </li>
+                        @endforeach
+                    </ul>
+                </section>
+
                 <form method="POST" action="{{ route('admin.settings.test-mail') }}" class="card flex flex-wrap items-end gap-3 p-5">
                     @csrf
                     <div class="flex-1"><x-field name="email" type="email" label="Envoyer un email de test à" :value="auth()->user()->email" required /></div>

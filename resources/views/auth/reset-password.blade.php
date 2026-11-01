@@ -1,4 +1,4 @@
-<x-layouts.app title="Nouveau mot de passe">
+<x-layouts.auth title="Nouveau mot de passe">
     <div class="mx-auto max-w-sm">
         <h1 class="mb-5 text-center text-2xl font-extrabold">Choisir un nouveau mot de passe</h1>
         <form method="POST" action="{{ route('password.update') }}" class="card space-y-4 p-5">
@@ -10,4 +10,4 @@
             <button class="btn btn-primary w-full py-3">Enregistrer</button>
         </form>
     </div>
-</x-layouts.app>
+</x-layouts.auth>

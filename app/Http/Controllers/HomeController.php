@@ -10,13 +10,20 @@ use App\Models\Product;
 use App\Models\Provider;
 use App\Models\ProviderType;
 use App\Support\AssistProblems;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 
 class HomeController extends Controller
 {
-    public function __invoke(): View
+    public function __invoke(Request $request): View|RedirectResponse
     {
+        // Un client connecté retrouve tout depuis son espace : l'accueil public le renvoie à son tableau de bord.
+        if ($request->user()?->isClient()) {
+            return redirect()->route('account.space');
+        }
+
         $marketplace = feature('marketplace_enabled');
 
         // Chiffres de la page d'accueil, recalculés toutes les 10 minutes.

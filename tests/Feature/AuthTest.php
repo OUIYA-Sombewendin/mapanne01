@@ -28,7 +28,7 @@ class AuthTest extends TestCase
             'password' => 'motdepasse',
             'password_confirmation' => 'motdepasse',
             'terms' => '1',
-        ])->assertRedirect('/mon-compte');
+        ])->assertRedirect('/mon-espace');
 
         $user = User::firstWhere('email', 'awa@exemple.bf');
         $this->assertSame('+22670112233', $user->phone);
@@ -144,9 +144,9 @@ class AuthTest extends TestCase
     {
         $user = User::factory()->create(['phone' => '+22670123456', 'email' => 'moi@exemple.bf']);
 
-        $this->post('/connexion', ['login' => 'MOI@exemple.bf', 'password' => 'password'])->assertRedirect('/mon-compte');
+        $this->post('/connexion', ['login' => 'MOI@exemple.bf', 'password' => 'password'])->assertRedirect('/mon-espace');
         $this->post('/deconnexion');
-        $this->post('/connexion', ['login' => '70 12 34 56', 'password' => 'password'])->assertRedirect('/mon-compte');
+        $this->post('/connexion', ['login' => '70 12 34 56', 'password' => 'password'])->assertRedirect('/mon-espace');
         $this->post('/deconnexion');
 
         // L'admin peut désactiver la connexion par téléphone.

@@ -20,12 +20,11 @@ class AccountController extends Controller
 {
     public function show(Request $request): View
     {
-        $user = $request->user()->load(['vehicles', 'city', 'neighborhood']);
+        // Profil et mot de passe ; les véhicules, favoris et avis ont leurs pages dans l'espace client.
+        $user = $request->user()->load(['city', 'neighborhood']);
 
         return view('account.show', [
             'user' => $user,
-            'favorites' => $user->favorites()->visible()->with('neighborhood:id,name')->latest('favorites.created_at')->get(),
-            'reviews' => $user->reviews()->with('provider:id,business_name,slug')->latest()->get(),
             'cities' => City::where('is_active', true)->orderBy('name')->with('neighborhoods:id,city_id,name')->get(),
         ]);
     }
@@ -58,9 +57,9 @@ class AccountController extends Controller
         $user->save();
 
         if ($emailChanged) {
-            Notifier::send($user, new VerifyEmail);
-
-            return back()->with('success', 'Profil mis à jour. Confirmez votre nouvelle adresse email avec le lien reçu.');
+            return Notifier::send($user, new VerifyEmail)
+                ? back()->with('success', 'Profil mis à jour. Confirmez votre nouvelle adresse email avec le lien envoyé à '.$user->email.'.')
+                : back()->with('error', 'Profil mis à jour, mais le lien de confirmation n\'a pas pu être envoyé : l\'envoi d\'emails n\'est pas encore en service.');
         }
 
         return back()->with('success', 'Profil mis à jour.');

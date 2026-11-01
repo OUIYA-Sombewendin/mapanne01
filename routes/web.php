@@ -78,6 +78,15 @@ Route::middleware('auth')->group(function () {
     Route::put('/mon-compte', [Account\AccountController::class, 'update'])->middleware('not-impersonating')->name('account.update');
     Route::put('/mon-compte/mot-de-passe', [Account\AccountController::class, 'updatePassword'])->middleware('not-impersonating')->name('account.password');
 
+    // Espace client : tableau de bord et suivi (accessible même avant la confirmation de l'email)
+    Route::middleware('role:client')->group(function () {
+        Route::get('/mon-espace', [Account\SpaceController::class, 'dashboard'])->name('account.space');
+        Route::get('/mes-depannages', [Account\SpaceController::class, 'assists'])->name('account.assists');
+        Route::get('/mes-vehicules', [Account\SpaceController::class, 'vehicles'])->name('account.vehicles');
+        Route::get('/mes-favoris', [Account\SpaceController::class, 'favorites'])->name('account.favorites');
+        Route::get('/mes-avis', [Account\SpaceController::class, 'reviews'])->name('account.reviews');
+    });
+
     // Notifications push de cet appareil
     Route::post('/notifications/push', [PushSubscriptionController::class, 'store'])->middleware('throttle:20,1')->name('push.store');
     Route::delete('/notifications/push', [PushSubscriptionController::class, 'destroy'])->name('push.destroy');

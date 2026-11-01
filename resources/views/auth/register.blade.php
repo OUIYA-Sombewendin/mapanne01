@@ -10,10 +10,11 @@
     ]]);
     $clientPitch = 'Trouvez vite un mécanicien, un dépanneur, une station ou une pièce près de vous.';
 @endphp
-<x-layouts.app title="Créer un compte">
+<x-layouts.auth title="Créer un compte" wide>
     <div class="mx-auto max-w-5xl" x-data="{
         type: @js(old('account_type', $accountType)),
         trade: @js(old('provider_type', '')),
+        terms: @js((bool) old('terms')),
         copy: @js($tradeCopy),
         get current() { return this.copy[this.trade] ?? null },
     }">
@@ -172,16 +173,19 @@
                         </div>
 
                         <label class="flex items-start gap-2 text-sm text-ink-600">
-                            <input type="checkbox" name="terms" value="1" class="checkbox mt-0.5" @checked(old('terms'))>
+                            <input type="checkbox" name="terms" value="1" class="checkbox mt-0.5" x-model="terms" required>
                             <span>J'accepte les <a href="{{ route('pages.show', 'conditions-utilisation') }}" target="_blank" class="text-accent-600 underline">conditions d'utilisation</a>
                                 et la <a href="{{ route('pages.show', 'confidentialite') }}" target="_blank" class="text-accent-600 underline">politique de confidentialité</a>.</span>
                         </label>
                         @error('terms') <p class="field-error">{{ $message }}</p> @enderror
 
-                        <button class="btn btn-primary w-full py-3.5 text-base" x-text="type === 'pro' ? 'Inscrire mon activité' : 'Créer mon compte'">Créer mon compte</button>
+                        {{-- Le bouton reste grisé tant que les conditions ne sont pas acceptées (le serveur le vérifie aussi). --}}
+                        <button class="btn btn-primary w-full py-3.5 text-base disabled:cursor-not-allowed disabled:opacity-50" :disabled="!terms"
+                                x-text="type === 'pro' ? 'Inscrire mon activité' : 'Créer mon compte'">Créer mon compte</button>
+                        <p x-show="!terms" class="-mt-4 text-center text-xs text-ink-500">Cochez la case ci-dessus pour continuer.</p>
                     </div>
                 </section>
             </form>
         </div>
     </div>
-</x-layouts.app>
+</x-layouts.auth>
