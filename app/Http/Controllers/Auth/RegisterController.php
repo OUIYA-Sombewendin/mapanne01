@@ -6,11 +6,13 @@ use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\City;
 use App\Models\Neighborhood;
+use App\Models\ProviderType;
 use App\Models\User;
 use App\Notifications\NewProviderRegistered;
 use App\Rules\BurkinaPhone;
 use App\Support\Notifier;
 use App\Support\Phone;
+use App\Support\ProviderProfiles;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -36,6 +38,7 @@ class RegisterController extends Controller
             'accountType' => ($wanted === 'pro' && $pros) || ! $clients ? 'pro' : 'client',
             'clientsOpen' => $clients,
             'prosOpen' => $pros,
+            'trades' => ProviderType::active(),
             'cities' => City::where('is_active', true)->orderBy('name')->with('neighborhoods:id,city_id,name')->get(),
         ]);
     }
@@ -73,7 +76,11 @@ class RegisterController extends Controller
         // Email = identifiant principal ; téléphone en second (obligatoire pour les pros : les clients les appellent).
         $phoneRequired = $isPro || feature('client_phone_required');
 
-        $data = $request->validate([
+        // Questions propres au métier choisi (facultatives, reprises dans la fiche métier).
+        $kind = $isPro ? ProviderType::active()->firstWhere('slug', $request->input('provider_type'))?->profileKind() : null;
+        $detailRules = ProviderProfiles::get($kind) ? ProviderProfiles::rules($kind) : [];
+
+        $data = $request->validate($detailRules + [
             'account_type' => ['required', Rule::in(['client', 'pro'])],
             'name' => ['required', 'string', 'max:100'],
             'email' => ['required', 'email', 'max:120', 'unique:users,email'],
@@ -90,7 +97,7 @@ class RegisterController extends Controller
             'terms.accepted' => 'Vous devez accepter les conditions d\'utilisation.',
         ]);
 
-        $user = DB::transaction(function () use ($data, $isPro) {
+        $user = DB::transaction(function () use ($data, $isPro, $kind) {
             $user = new User([
                 'name' => $data['name'],
                 'phone' => $data['phone'] ?? null,
@@ -107,7 +114,7 @@ class RegisterController extends Controller
                 $city = City::find($data['city_id']);
 
                 // Statut « pending » imposé par le modèle : invisible jusqu'à validation admin.
-                $user->provider()->create([
+                $provider = $user->provider()->create([
                     'type' => $data['provider_type'],
                     'business_name' => $data['business_name'],
                     'manager_name' => $data['name'],
@@ -119,6 +126,10 @@ class RegisterController extends Controller
                     'latitude' => $neighborhood?->latitude ?? $city->latitude,
                     'longitude' => $neighborhood?->longitude ?? $city->longitude,
                 ]);
+
+                if ($kind) {
+                    $provider->saveDetails($data['details'][$kind] ?? []);
+                }
             }
 
             return $user;

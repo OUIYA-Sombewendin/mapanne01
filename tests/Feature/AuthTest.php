@@ -75,6 +75,54 @@ class AuthTest extends TestCase
         $this->assertSame(ProviderStatus::Pending, $user->provider->status);
     }
 
+    public function test_registration_form_adapts_to_each_trade(): void
+    {
+        $this->get('/inscription?type=pro')
+            ->assertOk()
+            ->assertSee('Votre métier')
+            ->assertSee('details[garage][has_diagnostic]', false)
+            ->assertSee('details[station][fuel_types][]', false)
+            ->assertSee('details[shop][sells_used]', false);
+    }
+
+    public function test_trade_answers_given_at_registration_fill_the_trade_profile(): void
+    {
+        $city = City::create(['name' => 'Ouagadougou', 'slug' => 'ouagadougou', 'latitude' => 12.37, 'longitude' => -1.52]);
+
+        $this->post('/inscription', [
+            'account_type' => 'pro',
+            'provider_type' => 'garage',
+            'business_name' => 'Garage Wend-Kuuni',
+            'name' => 'Issa Ouédraogo',
+            'email' => 'garage@exemple.bf',
+            'phone' => '+226 76 00 00 02',
+            'city_id' => $city->id,
+            'password' => 'motdepasse',
+            'password_confirmation' => 'motdepasse',
+            'terms' => '1',
+            'details' => [
+                'garage' => ['employees' => '4', 'has_diagnostic' => '1'],
+                // Les réponses d'un autre métier sont ignorées.
+                'station' => ['brand' => 'Oryx'],
+            ],
+        ])->assertRedirect('/pro');
+
+        $provider = User::firstWhere('email', 'garage@exemple.bf')->provider;
+        $this->assertSame(4, $provider->garageProfile->employees);
+        $this->assertTrue($provider->garageProfile->has_diagnostic);
+        $this->assertFalse($provider->garageProfile->has_paint_shop);
+        $this->assertNull($provider->stationProfile);
+
+        // Une valeur invalide est refusée.
+        auth()->logout();
+        $this->post('/inscription', [
+            'account_type' => 'pro', 'provider_type' => 'station', 'business_name' => 'Station', 'name' => 'A',
+            'email' => 'station@exemple.bf', 'phone' => '+226 76 00 00 03', 'city_id' => $city->id,
+            'password' => 'motdepasse', 'password_confirmation' => 'motdepasse', 'terms' => '1',
+            'details' => ['station' => ['fuel_types' => ['kerosene']]],
+        ])->assertSessionHasErrors('details.station.fuel_types.0');
+    }
+
     public function test_role_cannot_be_injected_at_registration(): void
     {
         $this->post('/inscription', [

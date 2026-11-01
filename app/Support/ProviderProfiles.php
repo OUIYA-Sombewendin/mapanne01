@@ -111,6 +111,8 @@ class ProviderProfiles
                 'logo' => 'Logo ou photo de vous au travail', 'photos' => 'Photos de l\'atelier et de vos réalisations',
                 'night' => '🌙 J\'interviens la nuit', 'place' => 'Placez votre atelier (ou votre point de départ si vous vous déplacez).',
                 'services' => ['reparation', 'pneumatique', 'assistance'], 'details_intro' => 'Ce que les clients regardent avant d\'appeler un mécanicien.',
+                'pitch' => 'Recevez les appels des conducteurs en panne autour de vous.', 'phone' => 'Numéro où les clients vous joignent',
+                'signup' => ['vehicle_types', 'specialties', 'is_mobile'],
             ],
             'garage' => [
                 'name' => 'Nom du garage', 'name_hint' => 'Ex. Garage Wendkouni',
@@ -118,6 +120,8 @@ class ProviderProfiles
                 'logo' => 'Logo du garage', 'photos' => 'Photos du garage, de l\'atelier et des équipements',
                 'night' => '🌙 Le garage est ouvert la nuit', 'place' => 'Placez l\'entrée du garage sur la carte.',
                 'services' => ['reparation', 'carrosserie', 'pneumatique', 'assistance'], 'details_intro' => 'Capacité et équipements : ce qui distingue votre garage.',
+                'pitch' => 'Faites connaître votre garage, vos équipements et vos spécialités.', 'phone' => 'Téléphone du garage',
+                'signup' => ['employees', 'has_diagnostic', 'has_paint_shop', 'accepts_insurance'],
             ],
             'tow' => [
                 'name' => 'Nom du service de dépannage', 'name_hint' => 'Ex. Dépannage Express Faso',
@@ -125,6 +129,8 @@ class ProviderProfiles
                 'logo' => 'Logo ou photo de la dépanneuse', 'photos' => 'Photos de vos dépanneuses',
                 'night' => '🌙 J\'interviens la nuit', 'place' => 'Placez votre base (point de départ des interventions).',
                 'services' => ['assistance', 'pneumatique'], 'details_intro' => 'Flotte, zone et tarifs : les clients en panne veulent savoir vite.',
+                'pitch' => 'Soyez appelé dès qu\'un véhicule doit être remorqué près de vous.', 'phone' => 'Numéro d\'urgence',
+                'signup' => ['vehicle_types', 'trucks_count', 'available_24h'],
             ],
             'station' => [
                 'name' => 'Nom de la station', 'name_hint' => 'Ex. Station Oryx Kwamé N\'Krumah',
@@ -132,6 +138,8 @@ class ProviderProfiles
                 'logo' => 'Logo de l\'enseigne', 'photos' => 'Photos de la station',
                 'night' => '🌙 La station est ouverte la nuit', 'place' => 'Placez la station sur la carte.',
                 'services' => ['station', 'pneumatique', 'carrosserie'], 'details_intro' => 'Carburants et services disponibles sur place.',
+                'pitch' => 'Signalez votre station, vos carburants et vos services aux conducteurs.', 'phone' => 'Téléphone de la station',
+                'signup' => ['brand', 'fuel_types', 'open_24h'],
             ],
             'shop' => [
                 'name' => 'Nom de la boutique', 'name_hint' => 'Ex. Pièces Auto Faso',
@@ -139,6 +147,8 @@ class ProviderProfiles
                 'logo' => 'Logo de la boutique', 'photos' => 'Photos de la boutique et des rayons',
                 'night' => '🌙 La boutique est ouverte la nuit', 'place' => 'Placez la boutique sur la carte.',
                 'services' => ['pieces-detachees'], 'details_intro' => 'Ce que vous vendez et comment : détail, gros, occasion, commande.',
+                'pitch' => 'Vendez vos pièces en ligne et gérez votre boutique : stock, factures, bénéfices.', 'phone' => 'Téléphone de la boutique',
+                'signup' => ['vehicle_types', 'sells_wholesale', 'sells_used'],
             ],
         ];
 
@@ -148,6 +158,8 @@ class ProviderProfiles
             'logo' => 'Logo', 'photos' => 'Photos de l\'activité',
             'night' => '🌙 J\'interviens la nuit', 'place' => 'Placez votre activité sur la carte.',
             'services' => [], 'details_intro' => '',
+            'pitch' => 'Faites connaître votre activité aux conducteurs en panne.', 'phone' => 'Téléphone de l\'activité',
+            'signup' => [],
         ];
     }
 
