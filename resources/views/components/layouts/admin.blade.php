@@ -10,6 +10,7 @@
         'products' => \App\Models\Product::whereNull('approved_at')->count(),
         'subscriptions' => \App\Models\Subscription::where('status', 'pending')->whereNotNull('proof_submitted_at')->count(),
         'assist' => \App\Models\AssistRequest::active()->count(),
+        'documents' => \App\Models\ProviderDocument::where('status', 'pending')->count(),
     ]);
     $typeParam = request()->routeIs('admin.providers.*') ? request('type') : null;
 
@@ -22,6 +23,7 @@
         'Prestataires' => array_merge(
             [
                 ['admin.providers.index', [], request()->routeIs('admin.providers.*') && ! $typeParam, 'providers', 'Inscriptions et fiches', $todo['providers'] + $todo['review'], $me->can('providers.view')],
+                ['admin.verifications.index', [], request()->routeIs('admin.verifications.*'), 'shield', 'Justificatifs', $todo['documents'] ?: null, $me->can('providers.view')],
                 ['admin.assist.index', [], request()->routeIs('admin.assist.*'), 'phone', 'Dépannages en direct', $todo['assist'] ?: null, $me->can('providers.view') && feature('assist_enabled')],
             ],
             \App\Models\ProviderType::cached()->where('is_active', true)->values()->map(fn ($t) => [
@@ -30,6 +32,7 @@
         ),
         'Marketplace et modération' => [
             ['admin.marketplace.index', [], request()->routeIs('admin.marketplace.*'), 'shop', 'Pièces et demandes', $todo['products'], $me->can('marketplace.manage')],
+            ['admin.price-watch', [], request()->routeIs('admin.price-watch'), 'chart', 'Observatoire des prix', null, $me->can('marketplace.manage')],
             ['admin.reports.index', [], request()->routeIs('admin.reports.*'), 'flag', 'Signalements', $todo['reports'], $me->can('moderation.manage')],
             ['admin.reviews.index', [], request()->routeIs('admin.reviews.*'), 'star', 'Avis', $todo['reviews'], $me->can('moderation.manage')],
         ],
@@ -65,6 +68,7 @@
         ['Signalements ouverts', $todo['reports'], $me->can('moderation.manage') ? route('admin.reports.index') : null],
         ['Avis en attente', $todo['reviews'], $me->can('moderation.manage') ? route('admin.reviews.index', ['filter' => 'pending']) : null],
         ['Produits en attente', $todo['products'], $me->can('marketplace.manage') ? route('admin.marketplace.index', ['filter' => 'pending']) : null],
+        ['Justificatifs à vérifier', $todo['documents'], $me->can('providers.view') ? route('admin.verifications.index') : null],
         ['Paiements à vérifier', $todo['subscriptions'], $me->can('subscriptions.manage') ? route('admin.subscriptions.index') : null],
     ], fn ($n) => $n[1] > 0 && $n[2]);
     $notifCount = array_sum(array_column($notifications, 1));

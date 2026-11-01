@@ -1,6 +1,6 @@
 {{-- Statut légal. Paramètres : $id, $title, $text. --}}
 <section id="{{ $id ?? 'legal' }}" class="card scroll-mt-28 p-6" x-data="{ formal: {{ old('is_formal', $provider->is_formal) ? 'true' : 'false' }} }">
-    @include('pro._section-head', ['icon' => 'shield', 'title' => $title ?? 'Statut légal', 'text' => $text ?? 'Facultatif : les activités informelles sont les bienvenues. Ces numéros donnent le badge « Entreprise enregistrée » et apparaissent sur vos factures.'])
+    @include('pro._section-head', ['icon' => 'shield', 'title' => $title ?? 'Statut légal', 'text' => $text ?? 'Facultatif : les activités informelles sont les bienvenues. Ces numéros apparaissent sur vos factures. Pour le badge « Entreprise vérifiée », envoyez le document dans « Badges de confiance ».'])
     <label class="flex cursor-pointer items-center gap-3 text-sm font-medium">
         <input type="hidden" name="is_formal" value="0">
         <input type="checkbox" name="is_formal" value="1" x-model="formal" class="peer sr-only">

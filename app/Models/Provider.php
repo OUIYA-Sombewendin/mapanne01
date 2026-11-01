@@ -61,6 +61,9 @@ class Provider extends Model
             'is_formal' => 'boolean',
             'night_service' => 'boolean',
             'approved_at' => 'datetime',
+            'identity_verified_at' => 'datetime',
+            'business_verified_at' => 'datetime',
+            'workshop_verified_at' => 'datetime',
             'rating_avg' => 'float',
             'is_featured' => 'boolean',
             'needs_review' => 'boolean',
@@ -123,6 +126,17 @@ class Provider extends Model
     public function schedules(): HasMany
     {
         return $this->hasMany(Schedule::class)->orderBy('day');
+    }
+
+    /** Pièces justificatives (badges de confiance). */
+    public function documents(): HasMany
+    {
+        return $this->hasMany(ProviderDocument::class)->latest();
+    }
+
+    public function isVerified(): bool
+    {
+        return $this->identity_verified_at !== null;
     }
 
     public function photos(): HasMany
@@ -430,11 +444,11 @@ class Provider extends Model
         if ($this->is_featured && feature('featured_enabled')) {
             $badges[] = ['label' => '⭐ À la une', 'class' => 'bg-brand-100 text-brand-800'];
         }
-        if ($this->status === ProviderStatus::Approved) {
-            $badges[] = ['label' => '✓ Vérifié', 'class' => 'bg-emerald-100 text-emerald-800'];
-        }
-        if ($this->is_formal) {
-            $badges[] = ['label' => 'Entreprise enregistrée', 'class' => 'bg-sky-100 text-sky-800'];
+        // Badges de confiance : documents vérifiés par l'équipe (voir ProviderDocument).
+        foreach (ProviderDocument::KINDS as [, $label, $column]) {
+            if ($this->{$column}) {
+                $badges[] = ['label' => $label, 'class' => 'bg-emerald-100 text-emerald-800'];
+            }
         }
         if ($this->night_service) {
             $badges[] = ['label' => '🌙 Service de nuit', 'class' => 'bg-indigo-100 text-indigo-800'];

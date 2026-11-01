@@ -96,6 +96,12 @@
                     <p class="text-sm"><span class="text-ink-400 line-through">{{ \App\Models\Product::formatPrice($product->compare_at_price) }}</span>
                         <span class="chip bg-red-600 text-white">-{{ $product->discountPercent() }} %</span></p>
                 @endif
+                @if ($priceWatch)
+                    <div class="mt-3 rounded-xl bg-accent-50 px-3 py-2 text-sm text-accent-900">
+                        <p class="font-semibold">Prix constaté : {{ \App\Models\Product::formatPrice($priceWatch->min) }} – {{ \App\Models\Product::formatPrice($priceWatch->max) }}</p>
+                        <p class="text-xs text-accent-800">Pour une pièce proche, dans {{ $priceWatch->shops }} boutiques sur {{ setting('site_name') }}.</p>
+                    </div>
+                @endif
                 <span class="chip mt-2 {{ $availability['class'] }}">{{ $availability['label'] }}</span>
 
                 <div class="mt-4 grid grid-cols-2 gap-2" x-data
@@ -120,7 +126,7 @@
                     <div class="mt-2 flex flex-wrap gap-1.5">
                         @php($open = $shop->isOpenAt(now()))
                         <span @class(['chip', 'bg-emerald-50 text-emerald-700' => $open, 'bg-ink-100 text-ink-500' => ! $open])>{{ $open ? 'Ouvert maintenant' : 'Fermé actuellement' }}</span>
-                        @if ($shop->is_formal) <span class="chip bg-sky-100 text-sky-800">Entreprise enregistrée</span> @endif
+                        @if ($shop->business_verified_at) <span class="chip bg-emerald-100 text-emerald-800">🏢 Entreprise vérifiée</span> @endif
                     </div>
                     <ul class="mt-3 space-y-1 text-sm text-ink-600">
                         @if (feature('delivery_enabled'))

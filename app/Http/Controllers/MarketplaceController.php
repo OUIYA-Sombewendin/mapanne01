@@ -8,6 +8,7 @@ use App\Models\PartCategory;
 use App\Models\Product;
 use App\Models\Report;
 use App\Services\ProductSearch;
+use App\Support\PriceWatch;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\RateLimiter;
@@ -67,6 +68,7 @@ class MarketplaceController extends Controller
             'shop' => $product->provider,
             'isPreview' => ! $product->isVisible(),
             'similar' => $similar,
+            'priceWatch' => PriceWatch::forProduct($product),
             'moreFromShop' => $product->provider->products()->visible()->with('photos')
                 ->where('products.id', '!=', $product->id)->latest()->take(4)->get(),
             'reportReasons' => Report::reasons(),

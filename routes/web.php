@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', HomeController::class)->name('home');
 Route::get('/recherche', SearchController::class)->name('search');
 Route::get('/prestataires/{provider}', [ProviderController::class, 'show'])->name('providers.show');
+Route::post('/prestataires/{provider}/contact', [ProviderController::class, 'contact'])->middleware('throttle:30,1')->name('providers.contact');
 Route::view('/urgence', 'pages.emergency')->name('emergency');
 
 // Dépannage en direct : le conducteur envoie sa position, les pros proches sont prévenus.
@@ -118,6 +119,8 @@ Route::middleware('auth')->group(function () {
                 Route::post('/depannages/{assist}/etape', [Pro\AssistController::class, 'update'])->name('assist.update');
             });
 
+            Route::get('/statistiques', [Pro\StatsController::class, 'index'])->middleware(['shop:stats', 'plan:statistics'])->name('stats');
+
             // Boutiques du commerçant et changement de boutique active
             Route::get('/boutiques', [Pro\ShopController::class, 'index'])->name('shops.index');
             Route::post('/boutiques/{provider}/choisir', [Pro\ShopController::class, 'switch'])->name('shops.switch');
@@ -139,6 +142,9 @@ Route::middleware('auth')->group(function () {
                 Route::get('/fiche', [Pro\ProfileController::class, 'edit'])->name('profile');
                 Route::put('/fiche', [Pro\ProfileController::class, 'update'])->name('profile.update');
                 Route::get('/horaires', [Pro\ScheduleController::class, 'edit'])->name('schedule');
+                Route::get('/badges', [Pro\VerificationController::class, 'index'])->name('verification');
+                Route::post('/badges', [Pro\VerificationController::class, 'store'])->middleware('throttle:10,1')->name('verification.store');
+                Route::delete('/badges/{document}', [Pro\VerificationController::class, 'destroy'])->name('verification.destroy');
                 Route::put('/horaires', [Pro\ScheduleController::class, 'update'])->name('schedule.update');
                 Route::post('/photos', [Pro\PhotoController::class, 'store'])->name('photos.store');
                 Route::delete('/photos/{photo}', [Pro\PhotoController::class, 'destroy'])->name('photos.destroy');
@@ -220,6 +226,8 @@ Route::middleware('auth')->group(function () {
             Route::get('/prestataires', [Admin\ProviderController::class, 'index'])->name('providers.index');
             Route::get('/metiers/{type:slug}', [Admin\TradeController::class, 'show'])->name('trades.show');
             Route::get('/depannages', [Admin\AssistController::class, 'index'])->name('assist.index');
+            Route::get('/verifications', [Admin\VerificationController::class, 'index'])->name('verifications.index');
+            Route::get('/verifications/{document}/fichier', [Admin\VerificationController::class, 'file'])->name('verifications.file');
             Route::get('/prestataires/{provider}', [Admin\ProviderController::class, 'show'])->name('providers.show');
         });
         // Verrous anti-erreur : les actions d'administration (middleware « unlocked ») refusent un élément verrouillé.
@@ -235,6 +243,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/prestataires/{provider}/modifier', [Admin\ProviderController::class, 'edit'])->name('providers.edit');
             Route::put('/prestataires/{provider}', [Admin\ProviderController::class, 'update'])->name('providers.update');
             Route::post('/depannages/{assist}/fermer', [Admin\AssistController::class, 'close'])->name('assist.close');
+            Route::post('/verifications/{document}', [Admin\VerificationController::class, 'review'])->name('verifications.review');
             Route::post('/prestataires/{provider}/valider', [Admin\ProviderController::class, 'approve'])->name('providers.approve');
             Route::post('/prestataires/{provider}/refuser', [Admin\ProviderController::class, 'reject'])->name('providers.reject');
             Route::post('/prestataires/{provider}/suspendre', [Admin\ProviderController::class, 'suspend'])->name('providers.suspend');
@@ -268,6 +277,7 @@ Route::middleware('auth')->group(function () {
 
         Route::middleware(['can:marketplace.manage', 'unlocked'])->group(function () {
             Route::get('/pieces', [Admin\MarketplaceController::class, 'index'])->name('marketplace.index');
+            Route::get('/observatoire-prix', [Admin\PriceWatchController::class, 'index'])->name('price-watch');
             Route::post('/pieces/{product}/masquer', [Admin\MarketplaceController::class, 'hide'])->name('products.hide');
             Route::post('/pieces/{product}/republier', [Admin\MarketplaceController::class, 'restore'])->name('products.restore');
             Route::post('/pieces/{product}/publier', [Admin\MarketplaceController::class, 'approve'])->name('products.approve');

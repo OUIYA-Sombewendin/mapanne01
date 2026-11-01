@@ -61,7 +61,7 @@
                         <td>{{ $a->problemIcon() }} {{ $a->problemLabel() }}<br><span class="text-xs text-ink-400">{{ $a->vehicleLabel() }}{{ $a->city ? ' · '.$a->city->name : '' }}</span></td>
                         <td>{{ $a->contact_name }}<br><span class="text-xs text-ink-400">{{ \App\Support\Phone::format($a->contact_phone) }}</span></td>
                         <td class="text-center">{{ $a->notified_count }}</td>
-                        <td>@if ($a->provider) <a href="{{ route('admin.providers.show', $a->provider_id) }}" class="text-accent-700 hover:underline">{{ $a->provider->business_name }}</a> @if ($a->accepted_at) <br><span class="text-xs text-ink-400">en {{ max(1, (int) $a->created_at->diffInMinutes($a->accepted_at)) }} min</span> @endif @else — @endif</td>
+                        <td>@if ($a->provider) <a href="{{ route('admin.providers.show', $a->provider) }}" class="text-accent-700 hover:underline">{{ $a->provider->business_name }}</a> @if ($a->accepted_at) <br><span class="text-xs text-ink-400">en {{ max(1, (int) $a->created_at->diffInMinutes($a->accepted_at)) }} min</span> @endif @else — @endif</td>
                         <td><span class="chip {{ $a->statusClass() }}">{{ $a->statusLabel() }}</span>
                             @if ($a->close_reason) <span class="block text-xs text-ink-400">{{ \Illuminate\Support\Str::limit($a->close_reason, 60) }}</span> @endif</td>
                         <td class="whitespace-nowrap">

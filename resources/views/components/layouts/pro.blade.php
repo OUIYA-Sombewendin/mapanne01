@@ -50,6 +50,8 @@
             ['pro.assist.index', 'phone', 'Dépannages', $is('pro.assist.*'), $assistOpen !== null, $assistOpen ?: null],
             ['pro.profile', 'document', 'Fiche', $is('pro.profile'), $me->canShop('profile')],
             ['pro.schedule', 'clock', 'Horaires', $is('pro.schedule'), $me->canShop('profile')],
+            ['pro.verification', 'shield', 'Badges de confiance', $is('pro.verification*'), $me->canShop('profile')],
+            ['pro.stats', 'chart', 'Statistiques', $is('pro.stats'), $me->canShop('stats') && $provider->hasPlanFeature('statistics')],
         ],
         'Ventes' => [
             ['pro.products.index', 'cube', 'Catalogue', $is('pro.products.*'), $sells && $me->canShop('catalog') && $provider->hasPlanFeature('catalog')],

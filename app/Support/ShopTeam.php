@@ -25,6 +25,7 @@ class ShopTeam
         'invoices' => 'Ventes et factures',
         'expenses' => 'Dépenses',
         'reports' => 'Rapports et vue d\'ensemble',
+        'stats' => 'Statistiques de la fiche',
         'requests' => 'Demandes de pièces',
         'subscription' => 'Abonnement',
         'team' => 'Équipe',
@@ -32,7 +33,7 @@ class ShopTeam
     ];
 
     private const ACCESS = [
-        'manager' => ['dashboard', 'availability', 'assist', 'profile', 'catalog', 'stock', 'invoices', 'expenses', 'reports', 'requests'],
+        'manager' => ['dashboard', 'availability', 'assist', 'stats', 'profile', 'catalog', 'stock', 'invoices', 'expenses', 'reports', 'requests'],
         'seller' => ['dashboard', 'availability', 'catalog', 'stock', 'invoices', 'requests'],
         'cashier' => ['dashboard', 'invoices'],
     ];

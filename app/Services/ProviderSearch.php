@@ -39,6 +39,7 @@ class ProviderSearch
             'radius' => in_array($radius, $radii, true) ? $radius : $default,
             'open_now' => filter_var($input['open_now'] ?? false, FILTER_VALIDATE_BOOL),
             'night' => filter_var($input['night'] ?? false, FILTER_VALIDATE_BOOL),
+            'verified' => filter_var($input['verified'] ?? false, FILTER_VALIDATE_BOOL),
             'available' => filter_var($input['available'] ?? false, FILTER_VALIDATE_BOOL),
         ];
 
@@ -121,6 +122,9 @@ class ProviderSearch
             });
         }
 
+        if ($f['verified']) {
+            $query->whereNotNull('identity_verified_at');
+        }
         if ($f['night']) {
             $query->where('night_service', true);
         }

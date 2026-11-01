@@ -156,9 +156,11 @@
         {{-- Colonne contact --}}
         <aside class="space-y-5">
             <section class="card p-4 sm:p-5 lg:sticky lg:top-20">
-                <div class="grid grid-cols-2 gap-2">
-                    <a href="{{ $provider->callUrl() }}" class="btn btn-primary py-3">📞 Appeler</a>
-                    <a href="{{ $provider->whatsappUrl() }}" target="_blank" rel="noopener" class="btn btn-whatsapp py-3">WhatsApp</a>
+                {{-- Les liens restent directs ; le clic est compté en arrière-plan (statistiques du prestataire). --}}
+                <div class="grid grid-cols-2 gap-2" x-data
+                     @click="const a = $event.target.closest('a[data-contact]'); if (a) navigator.sendBeacon(@js(route('providers.contact', $provider)), new URLSearchParams({ _token: document.querySelector('meta[name=csrf-token]').content, channel: a.dataset.contact }))">
+                    <a data-contact="calls" href="{{ $provider->callUrl() }}" class="btn btn-primary py-3">📞 Appeler</a>
+                    <a data-contact="whatsapp" href="{{ $provider->whatsappUrl() }}" target="_blank" rel="noopener" class="btn btn-whatsapp py-3">WhatsApp</a>
                 </div>
                 <p class="mt-2 text-center text-sm font-semibold tracking-wide">{{ \App\Support\Phone::format($provider->phone) }}</p>
 

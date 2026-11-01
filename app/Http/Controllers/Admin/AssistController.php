@@ -21,7 +21,7 @@ class AssistController extends Controller
         $q = trim((string) $request->query('q'));
 
         $query = AssistRequest::query()
-            ->with(['provider:id,business_name,type', 'city:id,name'])
+            ->with(['provider:id,slug,business_name,type', 'city:id,name'])
             ->when($request->query('status'), fn ($query, $s) => $s === 'active' ? $query->active() : $query->where('status', $s))
             ->when($request->query('problem'), fn ($query, $p) => $query->where('problem', $p))
             ->when($request->query('city'), fn ($query, $c) => $query->where('city_id', $c))

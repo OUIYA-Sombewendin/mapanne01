@@ -88,6 +88,8 @@ class SettingsRegistry
                 'icon' => '⚙️',
                 'settings' => [
                     'marketplace_enabled' => ['type' => 'bool', 'label' => 'Marketplace de pièces activé', 'default' => true],
+                    'price_watch_public' => ['type' => 'bool', 'label' => 'Afficher le « prix constaté » (fourchette chez les autres boutiques) sur la page d\'une pièce', 'default' => true],
+                    'price_watch_min_shops' => ['type' => 'int', 'label' => 'Nombre minimum de boutiques pour afficher un prix constaté', 'default' => 3],
                     'products_premoderation' => ['type' => 'bool', 'label' => 'Valider chaque nouveau produit avant publication', 'default' => false],
                     'product_max_photos' => ['type' => 'int', 'label' => 'Photos max. par produit', 'default' => 4],
                     'allow_used_parts' => ['type' => 'bool', 'label' => 'Autoriser les pièces d\'occasion', 'default' => true],
